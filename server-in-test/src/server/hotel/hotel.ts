@@ -85,7 +85,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
         return invalid({ ...(result.ok ? {} : result.errors), ...(passwordError ? { password: passwordError } : {}) });
       }
       if (usernameTaken(result.value.username)) return invalid({ username: 'is already taken' }, 409);
-      const created = store.employees.create({ ...result.value, passwordHash: hashPassword(input.password!) }, actor);
+      const created = store.employees.create({ ...result.value, passwordHash: hashPassword(input.password!), mustChangePassword: true }, actor);
       return success(publicEmployee(created));
     },
     update: (id: string, patch: Partial<EmployeeInput> & { password?: string }, actor: Actor): Outcome<Employee> => {
@@ -101,7 +101,10 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
       if (existing.role === 'admin' && changes.role && changes.role !== 'admin' && activeAdmins().length <= 1) {
         return conflict('At least one admin is required');
       }
-      if (patch.password !== undefined) changes.passwordHash = hashPassword(patch.password);
+      if (patch.password !== undefined) {
+        changes.passwordHash = hashPassword(patch.password);
+        changes.mustChangePassword = true; // an admin-set password is temporary
+      }
       return success(publicEmployee(store.employees.update(id, changes, actor)!));
     },
     remove: (id: string, actor: Actor): Outcome<Employee> => {
@@ -118,6 +121,17 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
     restore: (id: string, actor: Actor): Outcome<Employee> => {
       const restored = store.employees.restore(id, actor);
       return restored ? success(publicEmployee(restored)) : notFound('Employee');
+    },
+    /** An employee choosing a new password for themselves (also clears a temporary password). */
+    changeOwnPassword: (id: string, currentPassword: unknown, newPassword: unknown, actor: Actor): Outcome<Employee> => {
+      const existing = store.employees.get(id);
+      if (!isActive(existing)) return notFound('Employee');
+      if (!verifyPassword(String(currentPassword ?? ''), existing.passwordHash)) return invalid({ currentPassword: 'is incorrect' });
+      const problem = validatePassword(newPassword);
+      if (problem) return invalid({ newPassword: problem });
+      if (newPassword === currentPassword) return invalid({ newPassword: 'must be different from the current password' });
+      const updated = store.employees.update(id, { passwordHash: hashPassword(String(newPassword)), mustChangePassword: false }, actor, 'password_change');
+      return success(publicEmployee(updated!));
     },
     authenticate: (username: string, password: string): Employee | undefined => {
       const name = String(username ?? '').trim().toLowerCase();

@@ -24,10 +24,12 @@ export interface EmployeeInput {
 
 export interface EmployeeRecord extends EmployeeInput {
   passwordHash: string;
+  /** Set for new accounts and admin resets: the employee must choose their own password first. */
+  mustChangePassword: boolean;
 }
 
 /** What the API returns: never includes the password hash. */
-export type Employee = Entity<EmployeeInput>;
+export type Employee = Entity<EmployeeInput & { mustChangePassword: boolean }>;
 
 export const ROOM_TYPES = ['exclusive', 'midline', 'basic'] as const;
 export type RoomType = (typeof ROOM_TYPES)[number];

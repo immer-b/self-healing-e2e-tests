@@ -7,6 +7,8 @@ import { Link, matchPath, navigate, usePath } from './router';
 import type { Role } from './api';
 import { LoginPage } from './pages/LoginPage';
 import { ThemeSelect } from './theme';
+import { ChangePasswordDialog, ChangePasswordPage } from './pages/ChangePassword';
+import { useState } from 'react';
 import { TodayPage } from './pages/TodayPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { PetsPage } from './pages/PetsPage';
@@ -53,6 +55,7 @@ function resolve(path: string, role: Role) {
 
 function Shell() {
   const { employee, signOut } = useAuth();
+  const [changingPassword, setChangingPassword] = useState(false);
   const path = usePath();
   const match = employee ? resolve(path, employee.role) : undefined;
 
@@ -92,6 +95,10 @@ function Shell() {
             </div>
           </div>
           <ThemeSelect />
+          <button type="button" className="btn btn-ghost btn-block sidebar-signout" onClick={() => setChangingPassword(true)}>
+            <Icon name="edit" />
+            Change password
+          </button>
           <button
             type="button"
             className="btn btn-ghost btn-block sidebar-signout"
@@ -108,6 +115,7 @@ function Shell() {
       <main className="content" id="main">
         <Page params={match.params} key={path} />
       </main>
+      {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
     </div>
   );
 }
@@ -116,6 +124,7 @@ function Gate() {
   const { employee } = useAuth();
   if (employee === undefined) return <Loading label="Checking your session" />;
   if (employee === null) return <LoginPage />;
+  if (employee.mustChangePassword) return <ChangePasswordPage />;
   return <Shell />;
 }
 

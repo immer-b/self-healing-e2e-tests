@@ -119,7 +119,7 @@ export function seedHotel({ hotel, store, today }: { hotel: Hotel; store: HotelS
   const actor = SYSTEM_ACTOR;
 
   for (const { password, archived, ...employee } of EMPLOYEES) {
-    const created = store.employees.create({ ...employee, passwordHash: hashOnce(password) }, actor);
+    const created = store.employees.create({ ...employee, passwordHash: hashOnce(password), mustChangePassword: false }, actor);
     if (archived) store.employees.remove(created.id, actor);
   }
 

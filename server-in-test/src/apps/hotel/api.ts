@@ -95,6 +95,8 @@ export const api = {
   login: (username: string, password: string) => request<{ employee: Employee }>('/auth/login', send('POST', { username, password })),
   logout: () => request<void>('/auth/logout', send('POST')),
   me: () => request<{ employee: Employee; today: string }>('/auth/me'),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ employee: Employee }>('/auth/password', send('POST', { currentPassword, newPassword })),
 
   employees: (params: ListParams = {}) => request<Employee[]>(`/employees${query(params)}`),
   staff: () => request<Employee[]>('/employees/staff'),

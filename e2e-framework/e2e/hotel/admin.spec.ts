@@ -15,6 +15,12 @@ test.describe('admin', () => {
 
     await page.getByRole('button', { name: 'Sign out' }).click();
     await signIn(page, { username: 'casey', password: 'welcome123' });
+    // a temporary password must be replaced before anything else
+    await expect(page.getByRole('heading', { name: 'Choose a new password' })).toBeVisible();
+    await page.getByLabel('Current password').fill('welcome123');
+    await page.getByLabel('New password', { exact: true }).fill('caseys-own-pw');
+    await page.getByLabel('Confirm new password').fill('caseys-own-pw');
+    await page.getByRole('button', { name: 'Save password' }).click();
     await expect(page.getByRole('heading', { level: 1, name: 'Today' })).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Main' }).getByRole('link')).toHaveText(['Today', 'Schedule', 'Pets', 'Owners', 'Rooms']);
   });

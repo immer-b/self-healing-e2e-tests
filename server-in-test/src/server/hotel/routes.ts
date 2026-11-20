@@ -111,6 +111,16 @@ export function hotelRoutes(hotel: Hotel) {
   router.use(authenticate);
 
   router.get('/auth/me', h((req, res) => res.json({ employee: req.employee, today: today() })));
+  router.post('/auth/password', h((req, res) => {
+    const { currentPassword, newPassword } = req.body ?? {};
+    send(res, hotel.employees.changeOwnPassword(req.employee.id, currentPassword, newPassword, actorOf(req)), 200, (employee) => ({ employee }));
+  }));
+
+  // Someone on a temporary password can only choose a new one (or sign out).
+  router.use((req: Request, res: Response, next: NextFunction) => {
+    if (!(req as AuthedRequest).employee.mustChangePassword) return next();
+    res.status(403).json({ error: 'Choose a new password to continue', code: 'password_change_required' });
+  });
 
   /* ---------- employees (admin) ---------- */
 
