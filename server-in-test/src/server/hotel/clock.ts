@@ -48,13 +48,16 @@ export function createClock(fixed?: Date, timeZone?: string) {
   }
   let pinned = fixed ? new Date(fixed) : undefined;
   const now = () => (pinned ? new Date(pinned) : new Date());
+  const dateOf = (date: Date): IsoDate => {
+    const { y, m, d } = partsIn(date, timeZone);
+    return `${y}-${pad(m)}-${pad(d)}`;
+  };
   return {
     now,
     timeZone,
-    today: (): IsoDate => {
-      const { y, m, d } = partsIn(now(), timeZone);
-      return `${y}-${pad(m)}-${pad(d)}`;
-    },
+    today: (): IsoDate => dateOf(now()),
+    /** The hotel calendar date of any instant. */
+    dateOf: (instant: Date | string) => dateOf(new Date(instant)),
     /** Minutes since midnight in the hotel's time zone. */
     minutesIntoDay: () => {
       const { h, min } = partsIn(now(), timeZone);

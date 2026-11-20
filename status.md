@@ -28,7 +28,7 @@ The order within each list is the suggested priority.
 | S8 | Done 2026-11-20 | Overdue rounds: flag pending rounds past their slot time on the schedule and in the queue | The front desk can't see work slipping | Yes | Overdue means 2 hours past the slot time (10:00 AM and 7:00 PM) | S |
 | S9 | Done 2026-11-20 | Generate the day's rounds automatically each morning | Someone has to remember to press Generate | Yes | 6:00 AM in the hotel time zone, for all active staff. The front desk can still rebalance | S |
 | S10 | Queued | Edit a stay: extend, shorten or change room, with the same overlap rules | Today the only option is cancel and rebook | Yes | Changes after check-in are allowed but logged. Future rounds are regenerated for the new dates | M |
-| S11 | Queued | Pagination and date-range filters for the change log and long lists | The audit log grows without bound | Yes | Cursor pagination with 50 per page, newest first | S |
+| S11 | Done 2026-11-20 | Pagination and date-range filters for the change log and long lists | The audit log grows without bound | Yes | Cursor pagination with 50 per page, newest first | S |
 | S12 | Queued | Export the change log and a pet's notes as CSV or PDF | Legal requests need a portable record | Yes | CSV first, generated on the client like the report app does | S |
 | S13 | Queued | Note addenda: append a correction linked to an earlier note | Notes can't be edited (correct), but mistakes need a visible fix | Yes | An addendum is a new note with `amends: noteId`, shown under the original | S |
 | S14 | Queued | Live updates on the schedule and queue (Server-Sent Events) | Staff need Refresh to see new or reassigned rounds | Yes | SSE stream of change events, with polling as the fallback | M |

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { api, type FieldChange } from '../api';
+import { useEffect, useState } from 'react';
+import { api, type FieldChange, type LabeledAuditEntry } from '../api';
 import { Icon } from '../components/Icon';
 import { Badge, Card, EmptyState, ErrorBanner, Loading, PageHeader, SelectField, TextField, type Tone } from '../components/ui';
 import { formatDateTime, humanize, useResource } from '../lib';
@@ -73,14 +73,36 @@ export function AuditPage(_props: { params: Record<string, string> }) {
   const entityType = search.get('entityType') ?? '';
   const entityId = search.get('entityId') ?? '';
   const [idDraft, setIdDraft] = useState(entityId);
-  const { data: entries, error, loading, reload } = useResource(() => api.audit({ entityType, entityId }), [entityType, entityId]);
+  const from = search.get('from') ?? '';
+  const to = search.get('to') ?? '';
+  const firstPage = useResource(() => api.audit({ entityType, entityId, from, to }), [entityType, entityId, from, to]);
+  const { error, loading } = firstPage;
+  const [entries, setEntries] = useState<LabeledAuditEntry[]>();
+  const [nextCursor, setNextCursor] = useState<string>();
+  const [loadingMore, setLoadingMore] = useState(false);
 
-  const setFilter = (next: { entityType?: string; entityId?: string }) => {
+  useEffect(() => {
+    if (!firstPage.data) return;
+    setEntries(firstPage.data.entries);
+    setNextCursor(firstPage.data.nextCursor);
+  }, [firstPage.data]);
+
+  const reload = () => firstPage.reload();
+  const loadMore = async () => {
+    setLoadingMore(true);
+    try {
+      const page = await api.audit({ entityType, entityId, from, to, before: nextCursor });
+      setEntries((current) => [...(current ?? []), ...page.entries]);
+      setNextCursor(page.nextCursor);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  const setFilter = (next: { entityType?: string; entityId?: string; from?: string; to?: string }) => {
     const params = new URLSearchParams();
-    const type = next.entityType ?? entityType;
-    const id = next.entityId ?? entityId;
-    if (type) params.set('entityType', type);
-    if (id) params.set('entityId', id);
+    const values = { entityType, entityId, from, to, ...next };
+    for (const [key, value] of Object.entries(values)) if (value) params.set(key, value);
     const qs = params.toString();
     navigate(`/audit${qs ? `?${qs}` : ''}`, { replace: true });
   };
@@ -107,8 +129,10 @@ export function AuditPage(_props: { params: Record<string, string> }) {
           >
             <TextField label="Record ID" placeholder="e.g. pet-3" value={idDraft} onChange={(e) => setIdDraft(e.target.value)} onBlur={() => setFilter({ entityId: idDraft.trim() })} />
           </form>
+          <TextField label="From" type="date" value={from} max={to || undefined} onChange={(e) => setFilter({ from: e.target.value })} />
+          <TextField label="To" type="date" value={to} min={from || undefined} onChange={(e) => setFilter({ to: e.target.value })} />
           <span className="spacer" />
-          {entries && <span className="count">{entries.length} entries</span>}
+          {entries && <span className="count">{entries.length}{nextCursor ? '+' : ''} entries</span>}
         </div>
         {error && <ErrorBanner>{error}</ErrorBanner>}
         {loading && !entries ? (
@@ -153,6 +177,13 @@ export function AuditPage(_props: { params: Record<string, string> }) {
         ) : (
           <EmptyState icon="audit" title="No changes recorded for this filter" />
         )}
+        {nextCursor && entries?.length ? (
+          <div className="card-body" style={{ display: 'flex', justifyContent: 'center' }}>
+            <button type="button" className="btn btn-secondary" onClick={loadMore} disabled={loadingMore}>
+              {loadingMore ? 'Loading…' : 'Load more'}
+            </button>
+          </div>
+        ) : null}
       </Card>
     </>
   );

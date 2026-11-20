@@ -28,7 +28,14 @@ export interface AuditFilter {
   entityType?: string;
   entityId?: string;
   limit?: number;
+  /** Cursor: only entries older than this entry id (paging backwards from the newest). */
+  before?: string;
+  /** Inclusive hotel-calendar date range. */
+  from?: string;
+  to?: string;
 }
+
+const sequence = (id: string) => Number(id.replace(/^aud-/, ''));
 
 /** Append-only change log. Entries are never edited or removed (except by a full test reset). */
 export function createAuditLog(clock: Clock) {
@@ -41,9 +48,16 @@ export function createAuditLog(clock: Clock) {
       entries.push(stored);
       return structuredClone(stored);
     },
-    list: ({ entityType, entityId, limit }: AuditFilter = {}): AuditEntry[] => {
+    list: ({ entityType, entityId, limit, before, from, to }: AuditFilter = {}): AuditEntry[] => {
+      const cursor = before ? sequence(before) : Infinity;
       const matching = entries
-        .filter((e) => (!entityType || e.entityType === entityType) && (!entityId || e.entityId === entityId))
+        .filter((e) => {
+          if (entityType && e.entityType !== entityType) return false;
+          if (entityId && e.entityId !== entityId) return false;
+          if (sequence(e.id) >= cursor) return false;
+          const day = from || to ? clock.dateOf(e.at) : '';
+          return (!from || day >= from) && (!to || day <= to);
+        })
         .reverse();
       return structuredClone(limit ? matching.slice(0, limit) : matching);
     },

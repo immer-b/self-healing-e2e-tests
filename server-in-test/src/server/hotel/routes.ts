@@ -146,12 +146,24 @@ export function hotelRoutes(hotel: Hotel) {
   };
 
   router.get('/audit', ADMIN, (req, res) => {
-    const limit = Number(req.query.limit);
-    const entries = hotel.audit.list({
+    const from = str(req.query.from) || undefined;
+    const to = str(req.query.to) || undefined;
+    if ((from && !isIsoDate(from)) || (to && !isIsoDate(to))) {
+      res.status(400).json({ error: 'Validation failed', errors: { from: 'must be a date (YYYY-MM-DD)' } });
+      return;
+    }
+    const requested = Number(req.query.limit);
+    const limit = Number.isInteger(requested) && requested > 0 ? Math.min(requested, 500) : 50;
+    const page = hotel.audit.list({
       entityType: str(req.query.entityType) || undefined,
       entityId: str(req.query.entityId) || undefined,
-      limit: Number.isInteger(limit) && limit > 0 ? limit : 500,
+      before: str(req.query.before) || undefined,
+      from,
+      to,
+      limit: limit + 1, // one extra tells us whether another page exists
     });
+    const entries = page.slice(0, limit);
+    if (page.length > limit) res.set('X-Next-Cursor', entries.at(-1)!.id);
     res.json(entries.map((entry) => ({ ...entry, label: LABELS[entry.entityType]?.(entry.entityId) ?? entry.entityId })));
   });
 

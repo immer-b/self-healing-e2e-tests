@@ -64,6 +64,10 @@ export const setUnauthorizedHandler = (handler: () => void) => {
 const BASE = '/api/hotel';
 
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  return (await requestWithHeaders<T>(path, init)).body;
+}
+
+async function requestWithHeaders<T>(path: string, init: RequestInit = {}): Promise<{ body: T; headers: Headers }> {
   const isBinary = init.body instanceof Blob;
   const response = await fetch(`${BASE}${path}`, {
     credentials: 'same-origin',
@@ -76,7 +80,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
     const { error, errors } = (body ?? {}) as { error?: string; errors?: Record<string, string> };
     throw Object.assign(new Error(error ?? `Request failed (${response.status})`), { status: response.status, errors });
   }
-  return body as T;
+  return { body: body as T, headers: response.headers };
 }
 
 const send = (method: string, data?: unknown): RequestInit => ({ method, body: data === undefined ? undefined : JSON.stringify(data) });
@@ -99,7 +103,10 @@ export const api = {
   archiveEmployee: (id: string) => request<Employee>(`/employees/${id}`, send('DELETE')),
   restoreEmployee: (id: string) => request<Employee>(`/employees/${id}/restore`, send('POST')),
 
-  audit: (params: { entityType?: string; entityId?: string } = {}) => request<LabeledAuditEntry[]>(`/audit${query(params)}`),
+  audit: async (params: { entityType?: string; entityId?: string; from?: string; to?: string; before?: string } = {}) => {
+    const { body, headers } = await requestWithHeaders<LabeledAuditEntry[]>(`/audit${query(params)}`);
+    return { entries: body, nextCursor: headers.get('X-Next-Cursor') ?? undefined };
+  },
 
   rooms: (params: { includeDeleted?: boolean } = {}) => request<Room[]>(`/rooms${query(params)}`),
   availableRooms: (checkIn: string, checkOut: string) => request<Room[]>(`/rooms/available${query({ checkIn, checkOut })}`),
