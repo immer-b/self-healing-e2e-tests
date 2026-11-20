@@ -9,8 +9,8 @@ export function SplitLogin({ state, resultsHref, onSubmit }: LoginLayoutProps) {
       </aside>
       <div className="form-panel">
         {state.displayName ? (
-          <div role="status" className="signed-in">
-            <p>Signed in as <strong>{state.displayName}</strong></p>
+          <div className="signed-in">
+            <p role="status">Signed in as <strong>{state.displayName}</strong></p>
             <a data-qa="go-results" href={resultsHref}>Continue to results →</a>
           </div>
         ) : (

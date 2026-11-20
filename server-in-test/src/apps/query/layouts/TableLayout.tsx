@@ -75,7 +75,7 @@ export function TableLayout({ records, filter, updateFilter, save, remove }: Que
             <div role="dialog" aria-label="Confirm deletion" className="modal">
               <p>Delete {dialog.record.name}?</p>
               <button id="confirm-delete" type="button"
-                onClick={async () => { await remove(dialog.record.id); close(); }}>Delete permanently</button>
+                onClick={async () => { await remove(dialog.record.id); close(); }}>Confirm delete</button>
               <button type="button" onClick={close}>Cancel</button>
             </div>
           )}

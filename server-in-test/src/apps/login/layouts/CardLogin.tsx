@@ -7,7 +7,7 @@ export function CardLogin({ state, resultsHref, onSubmit }: LoginLayoutProps) {
       <div className="card">
         {state.displayName ? (
           <>
-            <p className="greeting">Hello, {state.displayName}!</p>
+            <p className="greeting" role="status">Hello, {state.displayName}!</p>
             <a className="btn btn-link" href={resultsHref}>Open results</a>
           </>
         ) : (

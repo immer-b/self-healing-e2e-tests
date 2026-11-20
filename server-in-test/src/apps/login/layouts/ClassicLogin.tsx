@@ -5,7 +5,7 @@ export function ClassicLogin({ state, resultsHref, onSubmit }: LoginLayoutProps)
   if (state.displayName) {
     return (
       <main className="login-classic" data-ui-version="1">
-        <div id="welcome-message">Welcome, {state.displayName}</div>
+        <div id="welcome-message" role="status">Welcome, {state.displayName}</div>
         <a id="results-link" href={resultsHref}>View results</a>
       </main>
     );
