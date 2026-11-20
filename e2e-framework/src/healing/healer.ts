@@ -41,6 +41,8 @@ export interface HealEvent {
   score: number;
   breakdown: ScoreResult['breakdown'];
   url: string;
+  /** True when a previously healed selector was reused instead of re-scanning the page. */
+  fromCache: boolean;
 }
 
 const DEFAULTS = { threshold: 0.6, minScore: 0.45, minMargin: 0.1, primaryTimeout: 1500, healTimeout: 3000, maxCandidates: 3000 };
@@ -95,12 +97,27 @@ export function createHealer(options: HealerOptions) {
       return record;
     }
 
+    function report(spec: LocateSpec, healedSelector: string, result: ScoreResult, fromCache: boolean) {
+      onHeal?.({
+        pageId,
+        elementKey: spec.key,
+        originalSelector: spec.selector,
+        healedSelector,
+        score: Number(result.score.toFixed(3)),
+        breakdown: result.breakdown,
+        url: page.url(),
+        fromCache,
+      });
+    }
+
     /** A cached healed selector is reused only if it still points at a similar element. */
     async function reuseCached(spec: LocateSpec, selector: string, baseline: ElementFingerprint) {
       const locator = within(spec, selector);
       if (!(await appears(locator, primaryTimeout))) return undefined;
       const [match] = rankCandidates(baseline, [{ fingerprint: await evaluate(locator.first(), { mode: 'fingerprint' }) }], spec);
-      return match.score >= threshold ? locator : undefined;
+      if (match.score < minScore) return undefined;
+      report(spec, selector, match, true);
+      return locator;
     }
 
     async function heal(spec: LocateSpec, collection: boolean): Promise<Locator> {
@@ -125,15 +142,7 @@ export function createHealer(options: HealerOptions) {
             : best.selector;
           healedSelectors.set(key, healedSelector);
           if (updateBaselineOnHeal) await saveBaseline(spec, best.fingerprint);
-          onHeal?.({
-            pageId,
-            elementKey: spec.key,
-            originalSelector: spec.selector,
-            healedSelector,
-            score: Number(best.score.toFixed(3)),
-            breakdown: best.breakdown,
-            url: page.url(),
-          });
+          report(spec, healedSelector, best, false);
           const locator = within(spec, healedSelector);
           return collection ? locator : locator.first();
         }

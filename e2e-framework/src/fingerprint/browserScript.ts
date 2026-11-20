@@ -203,8 +203,17 @@ export function browserScript(target: Element, request: BrowserRequest): unknown
       const tag = el.tagName.toLowerCase();
       const classes = [...el.classList].map((c) => `.${CSS.escape(c)}`).join('');
       const role = el.getAttribute('role') ? `[role="${CSS.escape(el.getAttribute('role')!)}"]` : '';
+      // Exclude same-tag siblings that carry extra classes (e.g. a header row styled as a row).
+      const ownClasses = new Set(el.classList);
+      const extraClasses = new Set(
+        [...el.parentElement.children]
+          .filter((c) => c.tagName === el.tagName)
+          .flatMap((c) => [...c.classList])
+          .filter((c) => !ownClasses.has(c)),
+      );
+      const exclusions = [...extraClasses].map((c) => `:not(.${CSS.escape(c)})`).join('');
       const parentSelector = el.parentElement === target ? '' : selectorFor(el.parentElement);
-      const item = `${tag}${classes}${role}`;
+      const item = `${tag}${classes}${role}${exclusions}`;
       if (!parentSelector) return isDocumentRoot ? item : `:scope > ${item}`;
       return `${parentSelector} > ${item}`;
     }

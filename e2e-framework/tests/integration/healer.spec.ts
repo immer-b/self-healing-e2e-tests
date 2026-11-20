@@ -104,14 +104,14 @@ test.describe('healing', () => {
     expect((await store.get('login', 'password'))?.fingerprint.classes).toEqual(['input-pass']);
   });
 
-  test('reuses a healed selector for the same page without healing again', async ({ page }) => {
+  test('reuses a healed selector for the same page and reports it as a cache hit', async ({ page }) => {
     await page.setContent(LOGIN_V1);
     await healerFor(page).locate({ key: 'username', selector: '#username' });
     await page.setContent(LOGIN_V2);
     const healer = healerFor(page);
     await healer.locate({ key: 'username', selector: '#username' });
     await healer.locate({ key: 'username', selector: '#username' });
-    expect(events).toHaveLength(1);
+    expect(events.map((e) => e.fromCache)).toEqual([false, true]);
   });
 
   test('waits for an element that renders late while healing', async ({ page }) => {
@@ -149,6 +149,19 @@ test.describe('collections and scopes', () => {
     const rows = await healerFor(page).locateAll({ key: 'rows', selector: '#results tbody tr' });
     await expect(rows).toHaveCount(3);
     await expect(rows.filter({ hasText: 'Beta' })).toContainText('bob');
+  });
+
+  test('excludes same-tag siblings with extra classes (e.g. a header row) from a healed collection', async ({ page }) => {
+    await page.setContent(TABLE_V1);
+    await healerFor(page).locateAll({ key: 'rows', selector: '#results tbody tr' });
+    await page.setContent(`
+      <div role="grid" class="data-grid">
+        <div role="row" class="grid-row grid-header"><span>Name</span><span>Owner</span><span></span></div>
+        <div role="row" class="grid-row"><span>Alpha</span><span>alice</span><span><button class="kebab" aria-label="More options">…</button></span></div>
+        <div role="row" class="grid-row"><span>Beta</span><span>bob</span><span><button class="kebab" aria-label="More options">…</button></span></div>
+      </div>`);
+    const rows = await healerFor(page).locateAll({ key: 'rows', selector: '#results tbody tr' });
+    await expect(rows).toHaveCount(2);
   });
 
   test('heals an element inside a scope such as a single row', async ({ page }) => {
