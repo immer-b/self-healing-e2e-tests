@@ -6,6 +6,7 @@ import { hashPassword, verifyPassword } from './passwords';
 import { createPhotoStore } from './photos';
 import { assignEvenly, planCareTasks } from './scheduling';
 import { seedHotel } from './seed';
+import { createSessionStore } from './sessions';
 import {
   CARE_SLOTS,
   type Employee,
@@ -45,6 +46,7 @@ export interface ListFilter {
 export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boolean }) {
   const audit = createAuditLog(clock);
   const photos = createPhotoStore(clock);
+  const sessions = createSessionStore(clock);
   const store = {
     employees: createEntityStore<EmployeeRecord>({ entityType: 'employee', idPrefix: 'emp', audit, clock, secretFields: ['passwordHash'] }),
     rooms: createEntityStore<RoomInput>({ entityType: 'room', idPrefix: 'room', audit, clock }),
@@ -433,6 +435,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
     clock,
     audit,
     photos,
+    sessions,
     employees,
     rooms,
     owners,
@@ -444,6 +447,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
       Object.values(store).forEach((s) => s.reset());
       audit.reset();
       photos.reset();
+      sessions.reset();
       if (seed) seedHotel({ hotel, store, today: clock.today() });
     },
   };
