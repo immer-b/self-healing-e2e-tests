@@ -101,6 +101,7 @@ export const api = {
   audit: (params: { entityType?: string; entityId?: string } = {}) => request<LabeledAuditEntry[]>(`/audit${query(params)}`),
 
   rooms: (params: { includeDeleted?: boolean } = {}) => request<Room[]>(`/rooms${query(params)}`),
+  availableRooms: (checkIn: string, checkOut: string) => request<Room[]>(`/rooms/available${query({ checkIn, checkOut })}`),
   occupancy: (date: string) => request<RoomOccupancy[]>(`/rooms/occupancy${query({ date })}`),
   createRoom: (input: RoomInput) => request<Room>('/rooms', send('POST', input)),
   updateRoom: (id: string, patch: Partial<RoomInput>) => request<Room>(`/rooms/${id}`, send('PUT', patch)),

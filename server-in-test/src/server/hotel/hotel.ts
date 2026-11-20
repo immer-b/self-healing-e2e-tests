@@ -156,6 +156,14 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
       const restored = store.rooms.restore(id, actor);
       return restored ? success(restored) : notFound('Room');
     },
+    /** Active rooms with no active stay overlapping [checkIn, checkOut). */
+    available: (checkIn: IsoDate, checkOut: IsoDate): Outcome<Entity<RoomInput>[]> => {
+      if (!isIsoDate(checkIn) || !isIsoDate(checkOut) || checkOut <= checkIn) {
+        return invalid({ checkOut: 'must be after check-in' });
+      }
+      const range = { checkIn, checkOut } as StayInput;
+      return success(store.rooms.list().filter((room) => !activeStays((s) => s.roomId === room.id && overlaps(s, range)).length));
+    },
     /** Every active room with the stay occupying it on `date` (the night of `date`). */
     occupancy: (date: IsoDate) =>
       store.rooms.list().map((room) => {

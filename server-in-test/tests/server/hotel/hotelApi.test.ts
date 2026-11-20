@@ -212,6 +212,17 @@ describe('front desk: owners, pets, rooms and stays', () => {
     expect((await desk.post(`/api/hotel/stays/${booked.body.id}/check-out`)).body.status).toBe('checked_out');
   });
 
+  it('lists rooms that are free for a whole date range', async () => {
+    const desk = await signedIn('receiving');
+    const free = await desk.get(`/api/hotel/rooms/available?checkIn=${TODAY}&checkOut=2026-11-22`);
+    const names = free.body.map((r: { name: string }) => r.name);
+    expect(names).not.toContain('E-101'); // Biscuit until the 22nd
+    expect(names).toContain('E-102'); // Duke leaves today
+    expect(names).not.toContain('B-301'); // Pepper arrives today
+    expect(names).toContain('B-306');
+    expect((await desk.get('/api/hotel/rooms/available?checkIn=2026-11-22&checkOut=2026-11-20')).status).toBe(400);
+  });
+
   it('reports booking conflicts', async () => {
     const desk = await signedIn('receiving');
     const res = await desk.post('/api/hotel/stays').send({ petId: 'pet-8', roomId: 'room-1', checkIn: TODAY, checkOut: '2026-11-21' });

@@ -106,6 +106,7 @@ const FIELD_NAMES: Record<string, string> = {
   specialInstructions: 'Special instructions',
   assigneeId: 'Assignee',
   staffIds: 'Staff',
+  number: 'Phone number',
 };
 
 export function humanize(path: string) {

@@ -153,6 +153,9 @@ export function hotelRoutes(hotel: Hotel) {
       }),
     );
   });
+  router.get('/rooms/available', DESK, (req, res) => {
+    send(res, hotel.rooms.available(String(req.query.checkIn ?? ''), String(req.query.checkOut ?? '')));
+  });
   router.post('/rooms', ADMIN, h((req, res) => send(res, hotel.rooms.create(req.body, actorOf(req)), 201)));
   router.put('/rooms/:id', ADMIN, h((req, res) => send(res, hotel.rooms.update(String(req.params.id), req.body, actorOf(req)))));
   router.delete('/rooms/:id', ADMIN, h((req, res) => send(res, hotel.rooms.remove(String(req.params.id), actorOf(req)))));

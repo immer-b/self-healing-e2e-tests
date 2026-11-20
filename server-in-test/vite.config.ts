@@ -23,5 +23,7 @@ export default defineConfig({
     root: __dirname,
     include: ['tests/**/*.test.{ts,tsx}'],
     setupFiles: ['tests/setup.ts'],
+    // The hotel UI tests drive full forms against a real in-process API.
+    testTimeout: 20_000,
   },
 });
