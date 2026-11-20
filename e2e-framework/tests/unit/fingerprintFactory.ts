@@ -1,7 +1,9 @@
 import type { ElementFingerprint } from '../../src/fingerprint/types';
 
 /** Builds a fingerprint with sensible empty defaults for unit tests. */
-export function fp(overrides: Partial<ElementFingerprint> & { context?: Partial<ElementFingerprint['context']> } = {}): ElementFingerprint {
+type FingerprintOverrides = Omit<Partial<ElementFingerprint>, 'context'> & { context?: Partial<ElementFingerprint['context']> };
+
+export function fp(overrides: FingerprintOverrides = {}): ElementFingerprint {
   return {
     tag: 'div',
     role: '',

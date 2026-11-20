@@ -6,7 +6,8 @@
   "scripts": {
     "test": "vitest run",
     "e2e": "playwright test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "store:serve": "tsx src/store/serveStore.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",
