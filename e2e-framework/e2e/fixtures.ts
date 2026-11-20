@@ -1,5 +1,6 @@
 import { expect } from '@playwright/test';
 import { test as healingTest } from '../src';
+import { startWorkerServer, useWorkerServerAsBaseURL } from './workerServer';
 import { createLoginPage, type LoginPage } from './pages/loginPage';
 import { createResultsPage, type ResultsPage } from './pages/resultsPage';
 import { createReportPage, type ReportPage } from './pages/reportPage';
@@ -22,7 +23,9 @@ interface E2eFixtures {
   verifyHealing: void;
 }
 
-export const test = healingTest.extend<E2eOptions & E2eFixtures>({
+export const test = healingTest.extend<E2eOptions & E2eFixtures, { workerServer: string }>({
+  workerServer: [startWorkerServer, { scope: 'worker' }],
+  baseURL: useWorkerServerAsBaseURL,
   uiVersion: [1, { option: true }],
 
   prepareServer: [

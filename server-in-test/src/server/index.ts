@@ -1,4 +1,5 @@
 import { resolve } from 'node:path';
+import type { AddressInfo } from 'node:net';
 import { createApp } from './app';
 import { createRecordRepository } from './recordRepository';
 import { DEFAULT_USERS } from './auth';
@@ -23,10 +24,12 @@ const hotel = createHotel({
 });
 createDailyRounds(hotel).start(); // each morning at 6:00 hotel time
 
-createApp({ repository: createRecordRepository(SEED_RECORDS), users: DEFAULT_USERS, clientDir, enableTestRoutes, hotel, log: jsonLog }).listen(port, () => {
-  console.log(`server-in-test listening on http://localhost:${port}`);
+const server = createApp({ repository: createRecordRepository(SEED_RECORDS), users: DEFAULT_USERS, clientDir, enableTestRoutes, hotel, log: jsonLog }).listen(port, () => {
+  // PORT=0 asks the OS for a free port; the real one is printed so callers (e2e workers) can find it.
+  const actualPort = (server.address() as AddressInfo).port;
+  console.log(`server-in-test listening on http://localhost:${actualPort}`);
   console.log(storage.kind === 'sqlite' ? `pet hotel data: ${storage.file}` : 'pet hotel data: in memory (HOTEL_STORAGE=memory)');
   console.log(`pet hotel time zone: ${timeZone} (today is ${hotel.clock.today()}); set HOTEL_TZ to change it`);
   if (enableTestRoutes) console.log('test-support routes enabled: POST /api/test/reset, PUT /api/test/clock');
-  console.log(`change the UI version with: PUT http://localhost:${port}/api/ui-version {"version": 2}`);
+  console.log(`change the UI version with: PUT http://localhost:${actualPort}/api/ui-version {"version": 2}`);
 });

@@ -7,9 +7,10 @@ const BASE_URL = `http://localhost:${PORT}`;
 export default defineConfig<E2eOptions>({
   timeout: 60_000,
   expect: { timeout: 5_000 },
-  // The sample server keeps state in memory and tests reset it, so run serially.
-  workers: 1,
-  fullyParallel: false,
+  // Each worker gets its own sample server (e2e/workerServer.ts), so tests can run in parallel.
+  // Two workers: more starves the healer's timing-sensitive probes on a typical laptop.
+  workers: Number(process.env.E2E_WORKERS ?? 2),
+  fullyParallel: true,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     ...devices['Desktop Chrome'],

@@ -1,4 +1,5 @@
 import { test as base, expect, type Page } from '@playwright/test';
+import { startWorkerServer, useWorkerServerAsBaseURL } from '../workerServer';
 
 /** The hotel app runs on a pinned date so seeded arrivals, departures and rounds are predictable. */
 export const TODAY = '2026-11-20';
@@ -24,7 +25,9 @@ export async function signIn(page: Page, role: Role | { username: string; passwo
  * Pet hotel end-to-end fixtures: every test starts from the seed on a pinned "today", and the
  * clock is released afterwards so the legacy sample apps are unaffected.
  */
-export const test = base.extend<{ hotelServer: void }>({
+export const test = base.extend<{ hotelServer: void }, { workerServer: string }>({
+  workerServer: [startWorkerServer, { scope: 'worker' }],
+  baseURL: useWorkerServerAsBaseURL,
   hotelServer: [
     async ({ request }, use) => {
       await request.put('/api/test/clock', { data: { now: `${TODAY}T08:00:00` } });
