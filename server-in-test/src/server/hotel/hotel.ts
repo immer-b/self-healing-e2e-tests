@@ -7,6 +7,7 @@ import { createPhotoStore } from './photos';
 import { assignEvenly, planCareTasks } from './scheduling';
 import { seedHotel } from './seed';
 import { createSessionStore } from './sessions';
+import { createLoginThrottle } from './loginThrottle';
 import {
   CARE_SLOTS,
   type Employee,
@@ -47,6 +48,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
   const audit = createAuditLog(clock);
   const photos = createPhotoStore(clock);
   const sessions = createSessionStore(clock);
+  const loginThrottle = createLoginThrottle(clock);
   const store = {
     employees: createEntityStore<EmployeeRecord>({ entityType: 'employee', idPrefix: 'emp', audit, clock, secretFields: ['passwordHash'] }),
     rooms: createEntityStore<RoomInput>({ entityType: 'room', idPrefix: 'room', audit, clock }),
@@ -447,6 +449,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
     audit,
     photos,
     sessions,
+    loginThrottle,
     employees,
     rooms,
     owners,
@@ -459,6 +462,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
       audit.reset();
       photos.reset();
       sessions.reset();
+      loginThrottle.reset();
       if (seed) seedHotel({ hotel, store, today: clock.today() });
     },
   };

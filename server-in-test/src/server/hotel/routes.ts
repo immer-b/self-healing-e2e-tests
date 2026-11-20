@@ -78,11 +78,23 @@ export function hotelRoutes(hotel: Hotel) {
 
   router.post('/auth/login', (req, res) => {
     const { username, password } = req.body ?? {};
+    const key = `${String(username ?? '').trim().toLowerCase()}|${req.ip}`;
+    const gate = hotel.loginThrottle.check(key);
+    if (!gate.allowed) {
+      const minutes = Math.ceil(gate.retryAfterSeconds / 60);
+      res
+        .status(429)
+        .set('Retry-After', String(gate.retryAfterSeconds))
+        .json({ error: `Too many failed sign-in attempts. Try again in ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.` });
+      return;
+    }
     const employee = hotel.employees.authenticate(username, password);
     if (!employee) {
+      hotel.loginThrottle.fail(key);
       res.status(401).json({ error: 'Invalid username or password' });
       return;
     }
+    hotel.loginThrottle.succeed(key);
     const token = hotel.sessions.create(employee.id);
     res.cookie(SESSION_COOKIE, token, { httpOnly: true, sameSite: 'strict', path: '/', maxAge: SESSION_TTL_MS });
     res.json({ employee });
