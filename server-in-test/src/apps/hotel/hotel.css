@@ -10,24 +10,25 @@
   --border-strong: #cdd4cc;
   --text: #17201c;
   --text-2: #4b5751;
-  --text-3: #7a857f;
+  --text-3: #5b6761;
   --primary: #0f766e;
   --primary-hover: #0d645d;
   --primary-soft: #e3f4f1;
   --primary-text: #0b5a54;
+  --on-primary: #ffffff;
   --sidebar: #0f2e2b;
   --sidebar-2: #163d39;
   --sidebar-text: #c9dbd7;
   --sidebar-text-strong: #ffffff;
-  --info: #2563eb;
+  --info: #1d4fd0;
   --info-soft: #e8efff;
-  --success: #15803d;
+  --success: #12703a;
   --success-soft: #e5f6eb;
-  --warning: #b45309;
+  --warning: #96470a;
   --warning-soft: #fdf2e1;
-  --danger: #b42318;
+  --danger: #a51f15;
   --danger-soft: #fdecea;
-  --accent: #7c3aed;
+  --accent: #6d28d9;
   --accent-soft: #f1eafe;
   --focus: 0 0 0 3px rgb(15 118 110 / 0.3);
   --shadow-sm: 0 1px 2px rgb(16 24 20 / 0.06);
@@ -53,6 +54,8 @@
     --primary-hover: #3cc4b4;
     --primary-soft: #11332f;
     --primary-text: #7fdcd0;
+  --on-primary: #04211e;
+    --on-primary: #04211e;
     --sidebar: #0a1210;
     --sidebar-2: #132420;
     --info: #7aa2ff;
@@ -85,6 +88,7 @@
   --primary-hover: #3cc4b4;
   --primary-soft: #11332f;
   --primary-text: #7fdcd0;
+  --on-primary: #04211e;
   --sidebar: #0a1210;
   --sidebar-2: #132420;
   --info: #7aa2ff;
@@ -177,7 +181,7 @@ button { cursor: pointer; }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; height: 36px; padding: 0 14px; border-radius: var(--radius-sm); border: 1px solid transparent; font-weight: 600; font-size: 13.5px; white-space: nowrap; text-decoration: none; transition: background 0.12s, border-color 0.12s; }
 .btn:disabled { opacity: 0.55; cursor: not-allowed; }
-.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary { background: var(--primary); color: var(--on-primary); }
 .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
 .btn-secondary { background: var(--surface); border-color: var(--border-strong); color: var(--text); box-shadow: var(--shadow-sm); }
 .btn-secondary:hover:not(:disabled) { background: var(--surface-hover); }

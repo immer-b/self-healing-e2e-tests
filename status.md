@@ -49,7 +49,7 @@ The order within each list is the suggested priority.
 | --- | --- | --- | --- | --- | --- | --- |
 | T1 | Done 2026-11-20 | Property-based tests for `assignEvenly` (fast-check): for any input, loads differ by at most 1, nothing is lost or duplicated, and the result is deterministic | The core fairness promise is checked only on hand-picked cases | Yes | Add `fast-check` as a dev dependency | S |
 | T2 | Done 2026-11-20 | Session expiry and cookie tests driven by the pinned clock (12-hour TTL, logout revokes, reset revokes) | The TTL code path has no test | Yes | Uses the existing `clock.set` | S |
-| T3 | Queued | Accessibility checks with `@axe-core/playwright` on every hotel page | The UI relies on roles and labels; axe confirms they hold | Yes | Fail on serious and critical issues only | S |
+| T3 | Done 2026-11-20 (light and dark; fixed the contrast issues it found) | Accessibility checks with `@axe-core/playwright` on every hotel page | The UI relies on roles and labels; axe confirms they hold | Yes | Fail on serious and critical issues only | S |
 | T4 | Queued | Mobile Playwright project (Pixel 7) for the general staff journey | Staff work on phones. Only a screenshot covers that today | Yes | Reuse `staff.spec.ts` with a device preset | S |
 | T5 | Queued | Visual regression (`toHaveScreenshot`) for key hotel pages on the pinned clock | Catches CSS regressions the role-based tests can't see | Yes | Baselines from Linux CI only, to avoid font differences between operating systems | S |
 | T6 | Queued | Test data builders for the hotel (`aPet()`, `aStay()`) instead of seed ids like `emp-3` and `pet-1` | Tests break if the seed changes | Yes | Keep a few seed-based smoke tests | M |
