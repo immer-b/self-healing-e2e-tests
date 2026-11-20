@@ -8,6 +8,8 @@ import { createClock } from '../../../src/server/hotel/clock';
 import { createHotel, type Hotel } from '../../../src/server/hotel/hotel';
 import { hotelRoutes } from '../../../src/server/hotel/routes';
 import { HotelApp } from '../../../src/apps/hotel/HotelApp';
+import { createUiVersionState, uiVersionRoutes } from '../../../src/server/routes/uiVersionRoutes';
+import type { UiVersion } from '../../../src/server/types';
 
 export const TODAY = '2026-11-20';
 
@@ -27,9 +29,12 @@ afterEach(async () => {
  * Runs the real hotel API on a random port and points the page's `fetch` at it, carrying the
  * session cookie like a browser would. Component tests therefore exercise real business rules.
  */
-export async function startHotelApi(now = `${TODAY}T08:00:00`) {
+export async function startHotelApi(now = `${TODAY}T08:00:00`, uiVersion: UiVersion = 1) {
   const hotel = createHotel({ clock: createClock(new Date(now)) });
-  const app = express().use(express.json()).use('/api/hotel', hotelRoutes(hotel));
+  const app = express()
+    .use(express.json())
+    .use('/api/hotel', hotelRoutes(hotel))
+    .use('/api/ui-version', uiVersionRoutes(createUiVersionState(uiVersion)));
   const server = await new Promise<Server>((resolve) => {
     const s = app.listen(0, '127.0.0.1', () => resolve(s));
   });
@@ -66,8 +71,8 @@ export function renderAt(path = '/') {
 }
 
 /** Starts the API, renders the app and signs in as `role` (landing on that role's home page). */
-export async function signInAs(role: keyof typeof ACCOUNTS, path = '/', now?: string) {
-  const api = await startHotelApi(now);
+export async function signInAs(role: keyof typeof ACCOUNTS, path = '/', now?: string, uiVersion: UiVersion = 1) {
+  const api = await startHotelApi(now, uiVersion);
   const { user } = renderAt(path);
   const [username, password] = ACCOUNTS[role];
   await user.type(await screen.findByLabelText(/username/i), username);

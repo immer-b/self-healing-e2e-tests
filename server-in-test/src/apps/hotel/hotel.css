@@ -423,3 +423,41 @@ a.queue-item:hover { border-color: var(--primary); transform: translateY(-1px); 
 .offline-banner .icon { color: var(--warning); }
 .offline-banner.is-syncing { background: var(--info-soft); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
 .offline-banner.is-syncing .icon { color: var(--info); }
+
+/* ---------------- rounds layouts v2 / v3 (runtime UI versions) ---------------- */
+
+.pill-progress { padding: 3px 10px; border-radius: 999px; background: var(--primary-soft); color: var(--primary-text); font-weight: 600; font-size: 12.5px; }
+.round-open { font-weight: 650; color: var(--text); text-decoration: none; }
+.round-open:hover { color: var(--primary-text); text-decoration: underline; }
+.round-counter { margin: 0 0 16px; color: var(--text-2); }
+.round-counter-value { font-size: 22px; font-weight: 700; color: var(--text); }
+.round-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.round-card { display: grid; gap: 6px; padding: 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); box-shadow: var(--shadow-sm); }
+.round-card.is-done { opacity: 0.7; }
+.round-card header { display: flex; justify-content: space-between; align-items: center; }
+.round-card h3 { font-size: 17px; }
+.round-card-slot { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-3); }
+.round-card-link { margin-top: 4px; font-weight: 600; color: var(--primary-text); text-decoration: none; }
+.round-card-link:hover { text-decoration: underline; }
+
+.round-v2 { display: grid; gap: 16px; max-width: 760px; }
+.round-v2-brief { padding: 14px 16px; border-radius: var(--radius); background: var(--info-soft); border: 1px solid color-mix(in srgb, var(--info) 25%, transparent); }
+.round-v2-brief h2, .round-v2-heading { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+.round-v2-upload { justify-self: start; }
+.switch-list { display: grid; gap: 4px; margin-bottom: 14px; }
+.switch-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 2px; border-bottom: 1px solid var(--border); font-weight: 600; cursor: pointer; }
+.switch { appearance: none; position: relative; width: 40px; height: 22px; border-radius: 999px; background: var(--border-strong); cursor: pointer; transition: background 0.15s; }
+.switch::after { content: ''; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: var(--shadow); transition: transform 0.15s; }
+.switch:checked { background: var(--success); }
+.switch:checked::after { transform: translateX(18px); }
+.round-v2-finish { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+.round-v3 { display: grid; gap: 18px; }
+.round-steps { list-style: none; counter-reset: step; margin: 0; padding: 0; display: grid; gap: 10px; }
+.round-step { counter-increment: step; position: relative; padding: 14px 16px 14px 56px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--border); }
+.round-step::before { content: counter(step); position: absolute; left: 16px; top: 14px; display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--surface-2); font-weight: 700; color: var(--text-2); }
+.round-step.is-done::before { content: '✓'; background: var(--success-soft); color: var(--success); }
+.round-step h3 { font-size: 15px; margin-bottom: 6px; }
+.round-step-quote { margin: 0; padding-left: 10px; border-left: 3px solid var(--warning); color: var(--text-2); }
+.round-step-check { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 15px; cursor: pointer; }
+.round-step-check input { width: 20px; height: 20px; accent-color: var(--success); }

@@ -1,5 +1,5 @@
 import { useId, useState, type ChangeEvent } from 'react';
-import { api, photoUrl, type TaskDetail } from '../api';
+import { api, type TaskDetail } from '../api';
 import { Icon } from '../components/Icon';
 import { Badge, Card, ErrorBanner, Loading, PageHeader, useToast } from '../components/ui';
 import { ROOM_TYPE_LABELS, SLOT_LABELS, SLOT_TIMES, SPECIES_LABELS, formatDateTime, useResource } from '../lib';
@@ -8,6 +8,8 @@ import { NotesCard } from './PetDetailPage';
 import { prepareUpload } from '../image';
 import { useOffline } from '../offline';
 import { useEffect } from 'react';
+import { useHotelUiVersion } from '../uiVersion';
+import { ROUND_LAYOUTS } from './rounds/RoundLayouts';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -15,6 +17,7 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
   const toast = useToast();
   const { data: task, error, setData, reload } = useResource(() => api.task(params.id), [params.id]);
   const offline = useOffline();
+  const version = useHotelUiVersion();
   useEffect(() => {
     if (offline.syncVersion) reload();
   }, [offline.syncVersion, reload]);
@@ -80,6 +83,34 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
     }
   };
 
+  const contacts = (
+    <Card title="Emergency contacts">
+      <div className="card-body">
+        <ul className="contact-list">
+          {task.owner?.contacts.map((contact, i) => (
+            <li key={i}>
+              <span className="contact-name">{contact.name}</span>
+              <span className="cell-sub">{contact.relationship}</span>
+              {contact.phones.map((phone, j) => (
+                <span className="phone" key={j}>
+                  <Icon name="phone" size={14} />
+                  <a href={`tel:${phone.number.replace(/[^\d+]/g, '')}`}>{phone.number}</a>
+                  <span className="muted">{phone.label}</span>
+                </span>
+              ))}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </Card>
+  );
+  const hint = missing.length
+    ? `Still to do: ${missing.join(', ')}`
+    : !offline.online || offline.pending
+      ? 'Reconnect to complete the round.'
+      : 'All set. Mark the round complete to move on.';
+  const Layout = ROUND_LAYOUTS[version];
+
   return (
     <>
       <PageHeader
@@ -102,80 +133,21 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
           <ErrorBanner>{problem}</ErrorBanner>
         </div>
       )}
-      <div className="grid-sidebar">
-        <div className="stack">
-          <div className="callout" role="note" aria-label="Special instructions">
-            <Icon name="alert" />
-            <div>
-              <div className="callout-title">Special instructions</div>
-              <div>{task.pet?.specialInstructions || 'No special instructions. Standard care.'}</div>
-            </div>
-          </div>
-          <Card title="Checklist">
-            <div className="card-body checklist">
-              <label className="check-row">
-                <input type="checkbox" checked={task.cleaned} disabled={isDone} onChange={(e) => toggle('cleaned', e.target.checked)} />
-                Room cleaned
-              </label>
-              <label className="check-row">
-                <input type="checkbox" checked={task.fed} disabled={isDone} onChange={(e) => toggle('fed', e.target.checked)} />
-                Fed
-              </label>
-            </div>
-          </Card>
-          <Card title="Room photo">
-            <div className="card-body stack">
-              {task.photoId && <img className="photo-preview" src={photoUrl(task.photoId)} alt={`${task.pet?.name} in ${task.room?.name}`} />}
-              {!isDone && (
-                <div className="photo-drop">
-                  <Icon name="camera" size={26} />
-                  <label htmlFor={photoInputId} className="btn btn-secondary">
-                    {uploading ? 'Uploading…' : task.photoId ? 'Replace photo' : 'Take or choose a photo'}
-                  </label>
-                  <input id={photoInputId} type="file" accept="image/*" capture="environment" className="sr-only" aria-label="Photo of the pet in the room" onChange={upload} disabled={uploading} />
-                  <span className="field-hint">A clear photo of {task.pet?.name} in the room. JPEG, PNG, WebP or GIF up to 5 MB.</span>
-                </div>
-              )}
-            </div>
-          </Card>
-          <NotesCard petId={task.petId} petName={task.pet?.name} taskId={task.id} />
-        </div>
-        <div className="stack">
-          <Card title="Emergency contacts">
-            <div className="card-body">
-              <ul className="contact-list">
-                {task.owner?.contacts.map((contact, i) => (
-                  <li key={i}>
-                    <span className="contact-name">{contact.name}</span>
-                    <span className="cell-sub">{contact.relationship}</span>
-                    {contact.phones.map((phone, j) => (
-                      <span className="phone" key={j}>
-                        <Icon name="phone" size={14} />
-                        <a href={`tel:${phone.number.replace(/[^\d+]/g, '')}`}>{phone.number}</a>
-                        <span className="muted">{phone.label}</span>
-                      </span>
-                    ))}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Card>
-        </div>
-      </div>
-      {!isDone && (
-        <div className="complete-bar">
-          <span className="muted">
-            {missing.length
-              ? `Still to do: ${missing.join(', ')}`
-              : !offline.online || offline.pending
-                ? 'Reconnect to complete the round.'
-                : 'All set. Mark the round complete to move on.'}
-          </span>
-          <button type="button" className="btn btn-primary btn-lg" disabled={!canComplete || completing} onClick={complete}>
-            <Icon name="check" /> Complete round
-          </button>
-        </div>
-      )}
+      <Layout
+        task={task}
+        isDone={isDone}
+        missing={missing}
+        canComplete={canComplete}
+        completing={completing}
+        uploading={uploading}
+        hint={hint}
+        photoInputId={photoInputId}
+        toggle={toggle}
+        upload={upload}
+        complete={complete}
+        notes={<NotesCard petId={task.petId} petName={task.pet?.name} taskId={task.id} />}
+        contacts={contacts}
+      />
     </>
   );
 }

@@ -8,6 +8,7 @@ import type { Role } from './api';
 import { LoginPage } from './pages/LoginPage';
 import { ThemeSelect } from './theme';
 import { OfflineProvider } from './offline';
+import { HotelUiVersionProvider } from './uiVersion';
 import { ChangePasswordDialog, ChangePasswordPage } from './pages/ChangePassword';
 import { useState } from 'react';
 import { TodayPage } from './pages/TodayPage';
@@ -135,7 +136,9 @@ export function HotelApp() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <Gate />
+        <HotelUiVersionProvider>
+          <Gate />
+        </HotelUiVersionProvider>
       </ToastProvider>
     </AuthProvider>
   );
