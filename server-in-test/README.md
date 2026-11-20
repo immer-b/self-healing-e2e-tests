@@ -12,6 +12,8 @@ npm run serve       # vite build + start the server with test-support routes on 
 npm run build       # build the SPAs (hotel, login, query, report) into dist/client
 npm start           # start the server only, test-support routes off unless ENABLE_TEST_ROUTES=1 (expects dist/client)
 npm test            # Vitest: API, domain logic and React component tests
+npm run coverage    # the same with coverage; fails below the pet hotel's floors
+npm run mutation    # Stryker mutation testing of the hotel domain modules (about 12 minutes)
 npm run typecheck   # tsc --noEmit
 ```
 
@@ -65,6 +67,20 @@ Demo users for the self-healing login app: `admin` / `password123` and `viewer` 
 
 **Willow Pet Hotel** is a staff app for a pet hotel: front desk intake and release of pets, care rounds shared across the team, and a permanent record of notes and changes. It is the "real-world" app in this repository. It has a single UI version and lives beside the three versioned demo apps above. Screenshots of every screen are in [../docs/hotel.md](../docs/hotel.md).
 
+### Settings
+
+| Environment variable | Default | Purpose |
+| --- | --- | --- |
+| `PORT` | `3000` | Port to listen on. `0` picks a free port and prints it (the e2e workers use this) |
+| `HOTEL_STORAGE` | SQLite | `memory` keeps hotel data in memory only |
+| `HOTEL_DATA_DIR` | `server-in-test/data` | Folder for `hotel.db` (SQLite) and `photos/` |
+| `HOTEL_TZ` | `America/Los_Angeles` | The hotel's time zone, which decides what "today" is |
+| `ENABLE_TEST_ROUTES` | off | `1` mounts `/api/test/*`. `npm run serve` passes `--test-routes` instead |
+
+Hotel data is written through to SQLite (`node:sqlite`, Node 22.13 or newer) as one JSON document per record; reads come from memory. The first start seeds an empty database; restarts keep the data. Room photos are files in `photos/`, downscaled in the browser to 1600 px before upload. Sessions live in memory, so a restart signs everyone out.
+
+Every response carries security headers (CSP, `nosniff`, `Referrer-Policy`, `X-Frame-Options`) and an `X-Request-Id`. Each request is logged as one JSON line (method, path without query, status, duration, employee id; never bodies). `GET /healthz` reports whether the server and its data store are up. State-changing hotel requests from another origin are refused.
+
 ### Roles and what they do
 
 | Role (account) | Lands on | Can |
@@ -115,6 +131,12 @@ Role is `admin`, `receiving` or `staff`. Job type is `front_desk` or `maintenanc
   - Check-in opens on the arrival date.
 - **Sessions** are random 256-bit tokens in an `HttpOnly`, `SameSite=Strict` cookie, valid for 12 hours. Passwords are hashed with scrypt and a per-user salt. The role is looked up on every request, so role changes and archiving take effect immediately.
 - **Room photos** are JPEG, PNG, WebP or GIF up to 5 MB, stored under unguessable ids and served only to signed-in staff.
+- **Sign-in throttling:** 5 failed attempts for one username from one address lock it for 15 minutes (`429` with `Retry-After`).
+- **Temporary passwords:** accounts created by an admin, and passwords an admin resets, must be changed at the next sign-in. Until then every other endpoint answers `403 password_change_required`. Staff can change their own password from the sidebar.
+- **Note addenda:** a correction is a new note linked to the original (`amends`), shown underneath it. The original never changes.
+- **Changing a stay:** upcoming stays can move to new dates or rooms; a checked-in pet can only change its check-out date and room. The same overlap rules apply, and open rounds follow the room or are dropped when they fall outside the new dates.
+- **Possible duplicate owners** (same name, email or a shared phone number) are flagged before a new owner is saved. The front desk can still save.
+- **Pet profiles** hold date of birth, weight, vet and vaccinations with expiry dates. Expired vaccinations are flagged on the record; check-in is not blocked (that policy is still open).
 
 ### Care rounds and scheduling
 
@@ -124,6 +146,8 @@ The front desk picks who is **on shift** and presses **Generate rounds**. That a
 
 1. **Water-fill:** hand out task counts one at a time to whoever has the least work that day. This gives the most even split possible: nobody has more than one round more than anyone else, counting work they already had.
 2. **Fill the quotas:** keep a round with its current assignee when they still have quota, so nothing moves needlessly. Then keep both of a pet's rounds with the same person. Ties go to staff order, so the result is deterministic.
+
+Every morning at 6:00 hotel time the server generates the day's rounds for all active general staff on its own, and catches up if it starts later. A round more than two hours past its slot time (10:00 AM or 7:00 PM) is **overdue** and flagged on the schedule, the carer's queue and the Today page.
 
 **Rebalance open rounds** runs the same algorithm over the rounds that are not done yet, treating completed rounds as fixed. Use it when someone goes home sick or joins late. Single rounds can be reassigned from the board.
 
@@ -148,17 +172,21 @@ Access key: **A** = admin only. **D** = admin and front desk. **S** = any signed
 
 | Method & path | Access | Purpose |
 | --- | --- | --- |
+| `GET /openapi.json` | public | OpenAPI 3.1 description of this API. A test keeps it in step with the router |
 | `POST /auth/login` · `POST /auth/logout` · `GET /auth/me` | public · S · S | Session cookie. `me` returns `{ employee, today }` |
+| `POST /auth/password` | S | `{ currentPassword, newPassword }`: change your own password |
+| `GET /events` | S | Server-Sent Events: one `change` event (`{ entityType, entityId, action }`) per audited write |
 | `GET/POST /employees` · `PUT/DELETE /employees/:id` · `POST /employees/:id/restore` | A | Staff accounts. `POST` needs a `password` of 8+ characters. `PUT` may change `role` or `password` |
 | `GET /employees/staff` | D | Active general staff, for scheduling |
-| `GET /audit?entityType=&entityId=&limit=` | A | Change log, newest first, each entry with a readable `label` |
-| `GET /rooms` · `GET /rooms/occupancy?date=` · `GET /rooms/available?checkIn=&checkOut=` | S · D · D | Rooms, who is in each room on a night, and rooms free for a whole range |
+| `GET /audit?entityType=&entityId=&from=&to=&before=&limit=` | A | Change log, newest first, 50 per page with the next cursor in `X-Next-Cursor`, each entry with a readable `label` |
+| `GET /rooms` · `GET /rooms/occupancy?date=` · `GET /rooms/available?checkIn=&checkOut=&excludeStayId=` | S · D · D | Rooms, who is in each room on a night, and rooms free for a whole range |
 | `POST /rooms` · `PUT/DELETE /rooms/:id` · `POST /rooms/:id/restore` | A | Manage rooms |
 | `GET/POST /owners` · `GET/PUT/DELETE /owners/:id` · `POST /owners/:id/restore` | D | Owners with an address and a flexible list of contacts, each with phone numbers |
+| `GET /owners/duplicates?name=&email=&phone=` | D | Owners who look like the same person |
 | `GET/POST /pets` · `PUT/DELETE /pets/:id` · `POST /pets/:id/restore` · `GET /pets/:id/stays` | D | Pets. `?text=` matches pet, breed or owner |
 | `GET /pets/:id` · `GET/POST /pets/:id/notes` | S | Read a pet. Read and append notes |
 | `GET /stays?date=&petId=` · `GET /stays/arrivals?date=` · `GET /stays/departures?date=` | D | Stays joined with pet, owner and room. `date` defaults to the server's today |
-| `POST /stays` · `POST /stays/:id/check-in` · `/check-out` · `/cancel` | D | Book a room and move a stay through its statuses |
+| `POST /stays` · `PUT /stays/:id` · `POST /stays/:id/check-in` · `/check-out` · `/cancel` | D | Book, change dates or room, and move a stay through its statuses |
 | `GET /dashboard?date=` | D | Arrivals, departures, pets in house, occupancy and round progress |
 | `GET /tasks?date=` · `POST /tasks/generate` · `POST /tasks/rebalance` · `PUT /tasks/:id/assignee` | D | The care board. `generate` and `rebalance` take `{ date, staffIds? }` |
 | `GET /tasks/mine` | S | The signed-in carer's rounds for today, pending first |
@@ -167,6 +195,14 @@ Access key: **A** = admin only. **D** = admin and front desk. **S** = any signed
 | `GET /photos/:id` | S | A room photo |
 
 Test support: `POST /api/test/reset` restores the hotel seed and signs everyone out, along with resetting the demo records. `PUT /api/test/clock { now }` pins the hotel's "today". Send `null` to release it.
+
+### On the staff app
+
+- **Live updates:** the schedule, the carer's queue and the Today page refresh themselves when something changes elsewhere (Server-Sent Events, polling every 30 seconds where unavailable).
+- **Offline:** the app is installable (web manifest) and a service worker keeps the app shell and the rounds a carer reads. Checklist ticks and notes made without a connection are kept on the device and sent when it returns; photos and completing a round need a connection. Signing out clears the cached data.
+- **Theme:** light, dark or the system setting, chosen in the sidebar.
+- **CSV export** of the change log and of a pet's notes, with spreadsheet formula injection neutralised.
+- **Three layouts for the rounds pages:** the carer's queue and round pages follow `PUT /api/ui-version` like the demo apps (v1 list and cards, v2 table and switches, v3 cards and numbered steps), so the self-healing tests have a realistic app to heal against. Ids, classes, structure and wording change between versions; accessible names stay.
 
 The seed is relative to today: two guests arriving, two leaving, two mid-stay, one booked for tomorrow, one past guest, an archived employee, and today's eight rounds already shared across Jordan, Sam and Alex.
 

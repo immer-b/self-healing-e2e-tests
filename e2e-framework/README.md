@@ -11,7 +11,9 @@ npm test             # Vitest unit tests (similarity, scoring, stores)
 npm run e2e          # all Playwright projects (starts the sample server automatically)
 npx playwright test --project framework       # healer integration tests against inline HTML
 npx playwright test --project v2-healed       # one UI version (runs v1-baseline first)
-npx playwright test --project hotel           # pet hotel journeys (admin, front desk, general staff)
+npx playwright test --project hotel           # pet hotel journeys, offline mode and axe accessibility checks (light and dark)
+npx playwright test --project hotel-mobile    # the general staff journeys on a Pixel 7
+VISUAL=1 npx playwright test --project hotel-visual  # screenshot comparisons (Linux baselines, created by CI)
 npm run store:serve  # run a shared element-store service (see "Remote store")
 npm run screenshots  # capture every UI version side by side into ../docs/ui-versions.md (sample server must be running)
 npm run screenshots:hotel  # capture the pet hotel screens into ../docs/hotel.md (sample server must be running)
@@ -126,7 +128,9 @@ createDocumentStore(mongoClient.db('qa').collection('elements'));     // index {
 - `healEvents` (auto, test scope), which annotates each test with `self-healed` entries and attaches `self-healing.json`;
 - `healerOptions` (option), for tuning per project via `use: { healerOptions: { threshold: 0.7 } }`.
 
-`playwright.config.ts` defines five projects. `framework` covers the engine against inline HTML. `v1-baseline` records fingerprints with the v1 selectors. `v2-healed` and `v3-healed` depend on `v1-baseline` and must heal. `hotel` runs end-to-end journeys through the pet hotel staff app with plain role-based locators (the hotel has a single UI version, so there is nothing to heal yet).
+Tests run on two workers. Each worker starts its own sample server on a free port (`e2e/workerServer.ts`), so workers never share data, the UI version or the hotel clock. The `webServer` step only builds the client and serves one extra copy. `E2E_WORKERS` overrides the worker count; more than two starved the healer's timing-sensitive probes on a laptop.
+
+`playwright.config.ts` defines six projects (seven with `VISUAL=1`). `framework` covers the engine against inline HTML. `v1-baseline` records fingerprints with the v1 selectors. `v2-healed` and `v3-healed` depend on `v1-baseline` and must heal. `hotel` runs end-to-end journeys through the pet hotel staff app with plain role-based locators, plus axe accessibility audits of every page in light and dark mode. `hotel-mobile` repeats the staff journeys on a Pixel 7. The `v1`/`v2`/`v3` projects also run `e2e/specs/rounds.spec.ts`: the hotel's staff queue and round pages, healed across their three layouts by page objects written for v1 (`e2e/pages/roundsPage.ts`).
 
 The `hotel` project's fixture (`e2e/hotel/fixtures.ts`) pins the server clock to 2026-11-20 with `PUT /api/test/clock`, resets the data before each test, and releases the clock afterwards. That keeps seeded arrivals, departures and care rounds predictable.
 
@@ -155,7 +159,8 @@ e2e-framework/
 │  ├─ fixtures.ts              # uiVersion option, data reset, page object fixtures
 │  ├─ pages/                   # loginPage, resultsPage, reportPage (v1 selectors only)
 │  ├─ specs/                   # login, results (filter + row CRUD), report
-│  └─ hotel/                   # pet hotel journeys: fixtures (pinned clock), admin, frontDesk, staff
+│  ├─ workerServer.ts          # one sample server per worker, on a free port
+│  └─ hotel/                   # pet hotel: fixtures (pinned clock), admin, frontDesk, staff, accessibility, visual
 ├─ scripts/captureScreenshots.ts       # generates ../docs/ui-versions.md
 ├─ scripts/captureHotelScreenshots.ts  # generates ../docs/hotel.md
 ├─ tests/

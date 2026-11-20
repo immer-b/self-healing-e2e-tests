@@ -24,7 +24,7 @@ flowchart LR
 
 ## Prerequisites
 
-- Node.js 20 or newer (developed on Node 25) and npm 10 or newer
+- Node.js 22.13 or newer (the pet hotel stores data with `node:sqlite`; developed on Node 25) and npm 10 or newer
 - Git
 
 ## Install
@@ -60,7 +60,7 @@ Every healed lookup is added to the test as a `self-healed` annotation and a `se
 npm run serve --workspace server-in-test     # http://localhost:3000 (starts on UI v1)
 ```
 
-`http://localhost:3000/` opens the pet hotel. Sign in as `admin` / `password123` (admin), `frontdesk` / `frontdesk123` (front desk) or `jordan` / `staff123` (general staff). Each role sees its own pages. The data is in memory and seeded relative to today.
+`http://localhost:3000/` opens the pet hotel (data in `server-in-test/data/`, kept across restarts; `POST /api/test/reset` restores the seed). Sign in as `admin` / `password123` (admin), `frontdesk` / `frontdesk123` (front desk) or `jordan` / `staff123` (general staff). Each role sees its own pages. The data is in memory and seeded relative to today.
 
 The self-healing demo apps are at `/login/`, `/query/` and `/report/`.
 

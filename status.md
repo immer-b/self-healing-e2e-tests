@@ -59,7 +59,43 @@ The order within each list is the suggested priority.
 | T10 | Done 2026-11-20 (server per worker on a free port; 2 workers, 112 tests in 2.6 min) | Parallel e2e: one server per Playwright worker | `workers: 1` because data and UI version are global | Yes | Start the server per worker on `3100 + workerIndex` from a worker fixture | M |
 | T11 | Done 2026-11-20 (score 89.7% on the domain modules; npm run mutation) | Mutation testing (Stryker) on `src/server/hotel` | Shows which assertions are weak, as was done by hand for the framework | Yes | Run nightly, not on every commit | M |
 | T12 | Done 2026-11-20 | API contract snapshot: fail when a response shape changes without the UI types changing | The UI and server share TypeScript types, but the joined views (`pet`, `owner`, `room`) are built by hand | Yes | Snapshot of the response keys per endpoint | S |
-| T13 | Queued | Dark-mode screenshots and a contrast check | Dark mode exists but is never captured | Yes | Add `colorScheme: 'dark'` variants to the screenshot script | S |
+| T13 | Done 2026-11-20 (dark screenshots in docs/hotel.md; contrast covered by T3) | Dark-mode screenshots and a contrast check | Dark mode exists but is never captured | Yes | Add `colorScheme: 'dark'` variants to the screenshot script | S |
+
+---
+
+## 2026-11-20 16:18 EST
+
+Worked through the improvement queue: every item that could be done on reasonable assumptions is done (status column above). 36 commits, each on green.
+
+### Server and app
+- **Production basics:** test-support routes are opt-in (S1). Sign-in locks for 15 minutes after 5 failures (S2). Security headers and a same-origin check on writes (S3). Request ids, JSON logs and `GET /healthz` (S19)
+- **Persistence:** hotel data in SQLite through `node:sqlite`, kept across restarts (S4). Room photos on disk, downscaled to 1600 px in the browser (S5)
+- **Accounts:** temporary passwords must be replaced at first sign-in; staff can change their own (S6)
+- **Time:** "today" is decided in the hotel's time zone, `HOTEL_TZ` (S7). Rounds generate themselves at 6:00 AM (S9). Rounds more than 2 hours late are flagged as overdue (S8)
+- **Front desk:** change a stay's dates or room (S10). Warning about possible duplicate owners (S18). Pet profiles with vaccinations, lapsed ones flagged (S17, fields only)
+- **Records:** change log paging and date filters (S11). CSV export of the change log and pet notes (S12). Note addenda (S13)
+- **Staff app:** live updates over Server-Sent Events (S14). Installable, with an offline shell and an outbox for ticks and notes (S22). Light, dark or system theme (S21)
+- **API description:** OpenAPI 3.1 at `/api/hotel/openapi.json`, tested against the router (S20)
+- **Self-healing on a real app:** the carer's queue and round pages now have three runtime layouts, healed by v1-only page objects in the v1/v2/v3 projects (T9)
+
+### Test strength
+- Property-based tests for fair distribution (T1), checked by injecting a bug. Session expiry and revocation tests (T2)
+- axe audits of every hotel page in light and dark (T3). They found contrast failures in both themes and a link name that didn't contain its visible text; all fixed
+- Staff journeys on a Pixel 7 (T4). They found a sidebar that made the page wider than a phone screen, which blocked taps on Complete round; fixed
+- Opt-in visual regression (T5). Test-data builders (T6). Coverage floors, 93% statements today (T7). GitHub Actions CI (T8). Response-shape contract snapshots (T12). Dark-mode screenshots (T13)
+- Parallel e2e: one server per worker on a free port, 2 workers (T10). Mutation testing with Stryker scored 89.7% on the domain modules (T11)
+
+### Test coverage
+- Server and UI unit: 453 · framework unit: 66 · Playwright: 121 (framework 14, v1/v2/v3 23 each, hotel 34, hotel-mobile 4) · visual: 7 (opt-in)
+- Total: 640 tests, all passing
+
+### Limitations
+- Still needs a decision: shift rules (S15), constraint-based scheduling (S16), billing (S23), owner notifications (S24), and whether expired vaccinations should block check-in (S17)
+- Healing the hotel's rounds layouts relies on accessible names staying the same across versions. That matches what real redesigns usually keep, but healing still can't cross a pure renaming of every hint
+- The CI workflow has not run on GitHub yet, and the Linux visual baselines will be created by its first run
+- One unit test failed once under coverage and didn't reproduce in three more runs; the CI repeat runs are there to catch it
+- More than two e2e workers starves the healer's timing-sensitive probes on a laptop
+- `node:sqlite` prints an experimental warning on Node 25 and needs Node 22.13 or newer
 
 ---
 
