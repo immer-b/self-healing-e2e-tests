@@ -32,6 +32,7 @@ interface Shot {
   mobile?: boolean;
   /** Capture only the viewport instead of the whole scrollable page. */
   viewportOnly?: boolean;
+  dark?: boolean;
   prepare?: (page: Page) => Promise<void>;
 }
 
@@ -101,6 +102,15 @@ const SHOTS: Shot[] = [
     description: 'The same page on a 390 px wide phone screen.',
     prepare: openRoundAndFill,
   },
+  {
+    name: 'today-dark', title: 'Front desk: Today in dark mode', role: 'receiving', path: '/hotel/today', dark: true, viewportOnly: true,
+    description: 'The app follows the system theme, or the Light/Dark choice in the sidebar.',
+  },
+  {
+    name: 'round-dark', title: 'General staff: Care round in dark mode', role: 'staff', path: '/hotel/queue', dark: true, viewportOnly: true,
+    description: 'Dark mode on the page staff use most. Contrast is checked by the axe tests in both themes.',
+    prepare: openRoundAndFill,
+  },
 ];
 
 async function openRoundAndFill(page: Page) {
@@ -143,7 +153,7 @@ async function capture(browser: Browser, shot: Shot) {
   const context = await browser.newContext({
     viewport: shot.mobile ? { width: 390, height: 844 } : { width: 1440, height: 900 },
     deviceScaleFactor: shot.mobile ? 2 : 1,
-    colorScheme: 'light',
+    colorScheme: shot.dark ? 'dark' : 'light',
   });
   const page = await context.newPage();
   await context.request.post(`${BASE_URL}/api/test/reset`);
