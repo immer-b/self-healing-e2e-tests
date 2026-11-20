@@ -58,7 +58,7 @@ The order within each list is the suggested priority.
 | T9 | Queued | Versioned hotel layouts (v2/v3 for Today, Schedule and Queue) with page objects that go through the healer | Takes the self-healing demo from toy pages to a realistic app | Yes | Follow the existing `LAYOUTS[version]` pattern. Start with the staff queue and round pages | L |
 | T10 | Queued | Parallel e2e: one server per Playwright worker | `workers: 1` because data and UI version are global | Yes | Start the server per worker on `3100 + workerIndex` from a worker fixture | M |
 | T11 | Queued | Mutation testing (Stryker) on `src/server/hotel` | Shows which assertions are weak, as was done by hand for the framework | Yes | Run nightly, not on every commit | M |
-| T12 | Queued | API contract snapshot: fail when a response shape changes without the UI types changing | The UI and server share TypeScript types, but the joined views (`pet`, `owner`, `room`) are built by hand | Yes | Snapshot of the response keys per endpoint | S |
+| T12 | Done 2026-11-20 | API contract snapshot: fail when a response shape changes without the UI types changing | The UI and server share TypeScript types, but the joined views (`pet`, `owner`, `room`) are built by hand | Yes | Snapshot of the response keys per endpoint | S |
 | T13 | Queued | Dark-mode screenshots and a contrast check | Dark mode exists but is never captured | Yes | Add `colorScheme: 'dark'` variants to the screenshot script | S |
 
 ---

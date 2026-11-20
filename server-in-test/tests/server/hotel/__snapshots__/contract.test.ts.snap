@@ -1,0 +1,515 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`API contract > admin GET /audit?limit=1&entityType=pet keeps its shape 1`] = `
+[
+  {
+    "action": "string",
+    "actor": {
+      "id": "string",
+      "name": "string",
+    },
+    "at": "string",
+    "changes": [
+      {
+        "field": "string",
+        "from": "null",
+        "to": "string",
+      },
+    ],
+    "entityId": "string",
+    "entityType": "string",
+    "id": "string",
+    "label": "string",
+  },
+]
+`;
+
+exports[`API contract > admin GET /auth/me keeps its shape 1`] = `
+{
+  "employee": {
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "email": "string",
+    "id": "string",
+    "mustChangePassword": "boolean",
+    "name": "string",
+    "phone": "string",
+    "role": "string",
+    "type": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "username": "string",
+  },
+  "today": "string",
+}
+`;
+
+exports[`API contract > admin GET /dashboard?date=2026-11-20 keeps its shape 1`] = `
+{
+  "arrivals": "number",
+  "date": "string",
+  "departures": "number",
+  "inHouse": "number",
+  "occupiedRooms": "number",
+  "rooms": "number",
+  "tasks": {
+    "completed": "number",
+    "overdue": "number",
+    "total": "number",
+    "unassigned": "number",
+  },
+}
+`;
+
+exports[`API contract > admin GET /employees keeps its shape 1`] = `
+[
+  {
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "email": "string",
+    "id": "string",
+    "mustChangePassword": "boolean",
+    "name": "string",
+    "phone": "string",
+    "role": "string",
+    "type": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "username": "string",
+  },
+]
+`;
+
+exports[`API contract > admin GET /owners keeps its shape 1`] = `
+[
+  {
+    "address": {
+      "city": "string",
+      "line1": "string",
+      "line2": "string",
+      "postalCode": "string",
+      "state": "string",
+    },
+    "contacts": [
+      {
+        "name": "string",
+        "phones": [
+          {
+            "label": "string",
+            "number": "string",
+          },
+        ],
+        "relationship": "string",
+      },
+    ],
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "email": "string",
+    "id": "string",
+    "name": "string",
+    "petCount": "number",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > admin GET /pets/pet-1 keeps its shape 1`] = `
+{
+  "breed": "string",
+  "createdAt": "string",
+  "createdBy": {
+    "id": "string",
+    "name": "string",
+  },
+  "dateOfBirth": "string",
+  "deletedAt": "null",
+  "deletedBy": "null",
+  "id": "string",
+  "name": "string",
+  "owner": {
+    "deletedAt": "null",
+    "id": "string",
+    "name": "string",
+    "phone": "string",
+  },
+  "ownerId": "string",
+  "specialInstructions": "string",
+  "species": "string",
+  "updatedAt": "string",
+  "updatedBy": {
+    "id": "string",
+    "name": "string",
+  },
+  "vaccinations": [
+    {
+      "expiresOn": "string",
+      "name": "string",
+    },
+  ],
+  "vet": {
+    "name": "string",
+    "phone": "string",
+  },
+  "weightLbs": "number",
+}
+`;
+
+exports[`API contract > admin GET /pets/pet-1/notes keeps its shape 1`] = `
+[
+  {
+    "amends": "null",
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "id": "string",
+    "petId": "string",
+    "taskId": "null",
+    "text": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > admin GET /pets/pet-1/stays keeps its shape 1`] = `
+[
+  {
+    "checkIn": "string",
+    "checkOut": "string",
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "id": "string",
+    "owner": {
+      "deletedAt": "null",
+      "id": "string",
+      "name": "string",
+      "phone": "string",
+    },
+    "pet": {
+      "breed": "string",
+      "id": "string",
+      "name": "string",
+      "specialInstructions": "string",
+      "species": "string",
+    },
+    "petId": "string",
+    "room": {
+      "id": "string",
+      "name": "string",
+      "type": "string",
+    },
+    "roomId": "string",
+    "status": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > admin GET /pets?ownerId=own-1 keeps its shape 1`] = `
+[
+  {
+    "breed": "string",
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "dateOfBirth": "string",
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "id": "string",
+    "name": "string",
+    "owner": {
+      "deletedAt": "null",
+      "id": "string",
+      "name": "string",
+      "phone": "string",
+    },
+    "ownerId": "string",
+    "specialInstructions": "string",
+    "species": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "vaccinations": [
+      {
+        "expiresOn": "string",
+        "name": "string",
+      },
+    ],
+    "vet": {
+      "name": "string",
+      "phone": "string",
+    },
+    "weightLbs": "number",
+  },
+]
+`;
+
+exports[`API contract > admin GET /rooms keeps its shape 1`] = `
+[
+  {
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "id": "string",
+    "name": "string",
+    "nightlyRate": "number",
+    "type": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > admin GET /rooms/occupancy?date=2026-11-20 keeps its shape 1`] = `
+[
+  {
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "id": "string",
+    "name": "string",
+    "nightlyRate": "number",
+    "occupied": "boolean",
+    "pet": {
+      "id": "string",
+      "name": "string",
+      "species": "string",
+    },
+    "petId": "string",
+    "stayId": "string",
+    "type": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > admin GET /stays/arrivals?date=2026-11-20 keeps its shape 1`] = `
+[
+  {
+    "checkIn": "string",
+    "checkOut": "string",
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "id": "string",
+    "owner": {
+      "deletedAt": "null",
+      "id": "string",
+      "name": "string",
+      "phone": "string",
+    },
+    "pet": {
+      "breed": "string",
+      "id": "string",
+      "name": "string",
+      "specialInstructions": "string",
+      "species": "string",
+    },
+    "petId": "string",
+    "room": {
+      "id": "string",
+      "name": "string",
+      "type": "string",
+    },
+    "roomId": "string",
+    "status": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > admin GET /tasks?date=2026-11-20 keeps its shape 1`] = `
+[
+  {
+    "assignee": {
+      "id": "string",
+      "name": "string",
+    },
+    "assigneeId": "string",
+    "cleaned": "boolean",
+    "completedAt": "null",
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "date": "string",
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "fed": "boolean",
+    "id": "string",
+    "overdue": "boolean",
+    "owner": {
+      "contacts": [
+        {
+          "name": "string",
+          "phones": [
+            {
+              "label": "string",
+              "number": "string",
+            },
+          ],
+          "relationship": "string",
+        },
+      ],
+      "id": "string",
+      "name": "string",
+    },
+    "pet": {
+      "breed": "string",
+      "id": "string",
+      "name": "string",
+      "specialInstructions": "string",
+      "species": "string",
+    },
+    "petId": "string",
+    "photoId": "null",
+    "room": {
+      "id": "string",
+      "name": "string",
+      "type": "string",
+    },
+    "roomId": "string",
+    "slot": "string",
+    "status": "string",
+    "stayId": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
+
+exports[`API contract > staff GET /tasks/mine keeps its shape 1`] = `
+[
+  {
+    "assignee": {
+      "id": "string",
+      "name": "string",
+    },
+    "assigneeId": "string",
+    "cleaned": "boolean",
+    "completedAt": "null",
+    "createdAt": "string",
+    "createdBy": {
+      "id": "string",
+      "name": "string",
+    },
+    "date": "string",
+    "deletedAt": "null",
+    "deletedBy": "null",
+    "fed": "boolean",
+    "id": "string",
+    "overdue": "boolean",
+    "owner": {
+      "contacts": [
+        {
+          "name": "string",
+          "phones": [
+            {
+              "label": "string",
+              "number": "string",
+            },
+          ],
+          "relationship": "string",
+        },
+      ],
+      "id": "string",
+      "name": "string",
+    },
+    "pet": {
+      "breed": "string",
+      "id": "string",
+      "name": "string",
+      "specialInstructions": "string",
+      "species": "string",
+    },
+    "petId": "string",
+    "photoId": "null",
+    "room": {
+      "id": "string",
+      "name": "string",
+      "type": "string",
+    },
+    "roomId": "string",
+    "slot": "string",
+    "status": "string",
+    "stayId": "string",
+    "updatedAt": "string",
+    "updatedBy": {
+      "id": "string",
+      "name": "string",
+    },
+  },
+]
+`;
