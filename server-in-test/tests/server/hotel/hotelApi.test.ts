@@ -101,7 +101,7 @@ describe('admin: employees and change logs', () => {
   it('creates an employee with a role, who can then sign in', async () => {
     const admin = await signedIn('admin');
     const res = await admin.post('/api/hotel/employees').send({
-      name: 'Casey Nguyen', username: 'casey', email: 'casey@pawsinn.test', phone: '', role: 'staff', type: 'maintenance', password: 'welcome123',
+      name: 'Casey Nguyen', username: 'casey', email: 'casey@willowpets.test', phone: '', role: 'staff', type: 'maintenance', password: 'welcome123',
     });
     expect(res.status).toBe(201);
     expect(res.body).not.toHaveProperty('passwordHash');

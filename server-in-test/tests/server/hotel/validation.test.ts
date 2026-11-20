@@ -27,12 +27,12 @@ const validOwner = {
 };
 
 describe('employee validation', () => {
-  const valid = { name: ' Jordan Lee ', username: 'jordan', email: 'jordan@pawsinn.test', phone: '', role: 'staff', type: 'maintenance' };
+  const valid = { name: ' Jordan Lee ', username: 'jordan', email: 'jordan@willowpets.test', phone: '', role: 'staff', type: 'maintenance' };
 
   it('accepts and trims a valid employee', () => {
     expect(validateEmployee(valid)).toEqual({
       ok: true,
-      value: { name: 'Jordan Lee', username: 'jordan', email: 'jordan@pawsinn.test', phone: '', role: 'staff', type: 'maintenance' },
+      value: { name: 'Jordan Lee', username: 'jordan', email: 'jordan@willowpets.test', phone: '', role: 'staff', type: 'maintenance' },
     });
   });
 

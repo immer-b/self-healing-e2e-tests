@@ -15,6 +15,7 @@ export default defineConfig({
         login: resolve(appsRoot, 'login/index.html'),
         query: resolve(appsRoot, 'query/index.html'),
         report: resolve(appsRoot, 'report/index.html'),
+        hotel: resolve(appsRoot, 'hotel/index.html'),
       },
     },
   },

@@ -16,12 +16,12 @@ export const SEED_ACCOUNTS = {
 type SeedEmployee = EmployeeInput & { password: string; archived?: boolean };
 
 const EMPLOYEES: SeedEmployee[] = [
-  { name: 'Morgan Reyes', username: 'admin', email: 'morgan.reyes@pawsinn.test', phone: '503-555-0110', role: 'admin', type: 'front_desk', password: 'password123' },
-  { name: 'Priya Shah', username: 'frontdesk', email: 'priya.shah@pawsinn.test', phone: '503-555-0111', role: 'receiving', type: 'front_desk', password: 'frontdesk123' },
-  { name: 'Jordan Lee', username: 'jordan', email: 'jordan.lee@pawsinn.test', phone: '503-555-0112', role: 'staff', type: 'maintenance', password: 'staff123' },
-  { name: 'Sam Rivera', username: 'sam', email: 'sam.rivera@pawsinn.test', phone: '503-555-0113', role: 'staff', type: 'maintenance', password: 'staff123' },
-  { name: 'Alex Chen', username: 'alex', email: 'alex.chen@pawsinn.test', phone: '503-555-0114', role: 'staff', type: 'front_desk', password: 'staff123' },
-  { name: 'Riley Park', username: 'riley', email: 'riley.park@pawsinn.test', phone: '', role: 'staff', type: 'maintenance', password: 'staff123', archived: true },
+  { name: 'Morgan Reyes', username: 'admin', email: 'morgan.reyes@willowpets.test', phone: '503-555-0110', role: 'admin', type: 'front_desk', password: 'password123' },
+  { name: 'Priya Shah', username: 'frontdesk', email: 'priya.shah@willowpets.test', phone: '503-555-0111', role: 'receiving', type: 'front_desk', password: 'frontdesk123' },
+  { name: 'Jordan Lee', username: 'jordan', email: 'jordan.lee@willowpets.test', phone: '503-555-0112', role: 'staff', type: 'maintenance', password: 'staff123' },
+  { name: 'Sam Rivera', username: 'sam', email: 'sam.rivera@willowpets.test', phone: '503-555-0113', role: 'staff', type: 'maintenance', password: 'staff123' },
+  { name: 'Alex Chen', username: 'alex', email: 'alex.chen@willowpets.test', phone: '503-555-0114', role: 'staff', type: 'front_desk', password: 'staff123' },
+  { name: 'Riley Park', username: 'riley', email: 'riley.park@willowpets.test', phone: '', role: 'staff', type: 'maintenance', password: 'staff123', archived: true },
 ];
 
 const ROOMS: RoomInput[] = [
