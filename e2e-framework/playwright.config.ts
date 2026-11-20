@@ -39,9 +39,12 @@ export default defineConfig<E2eOptions>({
     { name: 'v3-healed', testDir: './e2e/specs', use: { uiVersion: 3 }, dependencies: ['v1-baseline'] },
 
     // The pet hotel staff app: admin, front desk and general staff journeys in a real browser.
-    { name: 'hotel', testDir: './e2e/hotel' },
+    { name: 'hotel', testDir: './e2e/hotel', testIgnore: /visual\.spec\.ts/ },
 
     // General staff work on phones: the same staff journeys on a Pixel 7 viewport with touch.
     { name: 'hotel-mobile', testDir: './e2e/hotel', testMatch: /staff\.spec\.ts/, use: { ...devices['Pixel 7'] } },
+
+    // Screenshot comparisons, opt-in with VISUAL=1 (baselines come from Linux CI).
+    ...(process.env.VISUAL ? [{ name: 'hotel-visual', testDir: './e2e/hotel', testMatch: /visual\.spec\.ts/ }] : []),
   ],
 });
