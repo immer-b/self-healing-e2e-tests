@@ -4,6 +4,45 @@ Running log of how the project evolves. Newest entry first.
 
 ---
 
+## 2026-11-20 10:26 EST
+
+### Pet hotel (`server-in-test`, `/hotel/`)
+- New production-style staff app, **Willow Pet Hotel**, now the default page (`/` redirects to `/hotel/`). The three self-healing demo apps are unchanged
+- Roles: **admin**, **front desk** (`receiving`) and **general staff**, each with its own navigation and landing page. Pages and API routes are both role-guarded
+- Entities: employees (role plus job type: front desk or maintenance), owners (address plus any number of contacts, each with a relationship and any number of phone numbers), pets (name, species, breed, owner, special instructions), rooms (exclusive, midline, basic), stays, notes, care rounds
+- Admin: create, edit, archive and restore employees and set their roles; manage rooms; change log for every entity showing who changed what and when, field by field
+- Front desk:
+  - Today dashboard: arrivals and departures with check-in and check-out
+  - Pets and owners CRUD
+  - Pet record: stays, booking a free room, cancelling
+  - Room occupancy
+  - Care schedule: generate rounds for the staff on shift, spread evenly; reassign; rebalance
+- General staff: today's queue (pending first). A round page with "Room cleaned" and "Fed" checkboxes, special instructions, emergency contacts, a room photo upload and notes. Complete unlocks only when everything is done and returns to the queue
+- Nothing is deleted: archive and restore everywhere. Notes are append-only for legal records. Every write is audited, with password hashes masked
+- Security: scrypt password hashes; random session tokens in an `HttpOnly`, `SameSite=Strict` cookie; archived users lose access immediately; the last admin is protected
+- Scheduling: water-fill then quota fill. Loads never differ by more than one round, and a pet's rounds stay with one carer when possible. Library recommendation (Timefold, LP solvers, FullCalendar or react-big-calendar, BullMQ) is in the server README
+- `PUT /api/test/clock` pins the hotel's "today" for tests. `POST /api/test/reset` also resets the hotel
+- UI: in-house design system with tokens, dark mode, responsive down to phone width, accessible dialogs, toasts and inline field errors. Screenshots are in [docs/hotel.md](docs/hotel.md)
+- Built test-first: 17 commits, each on green
+
+### Test strength
+- Hotel UI tests run against the **real hotel API** in-process, with a cookie jar, not a mocked `fetch`. They exercise real validation, permissions and scheduling
+- The commit gate runs typecheck plus the tests. It caught two timing-sensitive assertions, both fixed by waiting on what the user sees
+- Browser journeys (`hotel` Playwright project) on a pinned date: admin creates and archives staff, front desk checks guests in and out and registers an owner, pet and booking, front desk schedules and rebalances, staff complete a round with a photo, staff are kept off other pages
+
+### Test coverage
+- Server unit: 301, of which 118 are hotel domain and API and 61 are hotel UI · framework unit: 66 · healer integration: 14 · E2E: 20 specs × 3 versions = 60, plus 9 hotel journeys
+- Total: 450 tests, all passing
+
+### Limitations
+- Hotel data, photos and sessions live in memory and reset on restart (queue S4, S5)
+- Test-support routes are open on any running server (queue S1)
+- The hotel has a single UI version, so it is not yet part of the self-healing demo (queue T9)
+- "Today" uses the server's local time zone (queue S7)
+- Improvements with feasibility notes are in [queue.md](queue.md)
+
+---
+
 ## 2026-11-20 08:22 EST
 
 ### Changes

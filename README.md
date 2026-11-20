@@ -2,13 +2,15 @@
 
 A TypeScript end-to-end test framework built on Playwright whose locators **heal themselves** when the UI changes, plus a sample application with **three UI versions** to prove it.
 
+The sample server also hosts **Willow Pet Hotel** (`/hotel/`), a production-style staff app for a pet hotel. Admins manage employees and read change logs. The front desk checks pets in and out, keeps owner and pet records and schedules care rounds. General staff work through their rounds with a checklist, a room photo and notes. See [server-in-test/README.md](server-in-test/README.md#pet-hotel-hotel) and the [screenshots](docs/hotel.md).
+
 Page objects are written once, against UI v1. When v2 or v3 renames ids, swaps a `<table>` for cards or moves row actions into a drawer, the framework compares a stored *fingerprint* of each element with what is on the page now and picks the best match.
 
 ```mermaid
 flowchart LR
   subgraph repo[repository]
     direction LR
-    SIT["server-in-test/<br/>Node + Express API<br/>React SPAs: login · query · report<br/>3 UI versions each<br/>(PUT /api/ui-version)"]
+    SIT["server-in-test/<br/>Node + Express API<br/>Pet hotel staff app (/hotel/)<br/>React SPAs: login · query · report<br/>3 UI versions each<br/>(PUT /api/ui-version)"]
     FW["e2e-framework/<br/>self-healing engine<br/>element store API<br/>page objects + specs"]
   end
   FW -- "drives Chromium via Playwright" --> SIT
@@ -17,7 +19,7 @@ flowchart LR
 
 | Folder | What it is | Details |
 | --- | --- | --- |
-| [`server-in-test/`](server-in-test/README.md) | The application under test: a Node/Express backend and three React single-page apps (login, query/results table, report), each with three layouts | [server-in-test/README.md](server-in-test/README.md) |
+| [`server-in-test/`](server-in-test/README.md) | The application under test: a Node/Express backend, the pet hotel staff app, and three React single-page apps (login, query/results table, report), each with three layouts | [server-in-test/README.md](server-in-test/README.md) |
 | [`e2e-framework/`](e2e-framework/README.md) | The self-healing framework (fingerprinting, scoring, healer, pluggable storage) plus page objects and specs for the sample apps | [e2e-framework/README.md](e2e-framework/README.md) |
 
 ## Prerequisites
@@ -37,7 +39,7 @@ npx playwright install chromium                     # browser used by the tests
 ```bash
 npm test             # all unit tests, then all Playwright tests
 npm run test:unit    # Vitest: server-in-test + e2e-framework
-npm run test:e2e     # Playwright: framework integration + v1/v2/v3 e2e
+npm run test:e2e     # Playwright: framework integration + v1/v2/v3 e2e + pet hotel journeys
 ```
 
 `npm run test:e2e` builds the SPAs and starts the sample server on port 3100 automatically, using Playwright's `webServer` setting.
@@ -58,7 +60,11 @@ Every healed lookup is added to the test as a `self-healed` annotation and a `se
 npm run serve --workspace server-in-test     # http://localhost:3000 (starts on UI v1)
 ```
 
-Open `/login/`, `/query/` or `/report/`. To switch every app to another layout while the server runs, call the version endpoint. Open pages pick up the change within about a second, with no reload:
+`http://localhost:3000/` opens the pet hotel. Sign in as `admin` / `password123` (admin), `frontdesk` / `frontdesk123` (front desk) or `jordan` / `staff123` (general staff). Each role sees its own pages. The data is in memory and seeded relative to today.
+
+The self-healing demo apps are at `/login/`, `/query/` and `/report/`.
+
+To switch every demo app to another layout while the server runs, call the version endpoint. Open pages pick up the change within about a second, with no reload:
 
 ```bash
 curl -X PUT localhost:3000/api/ui-version -H "Content-Type: application/json" -d '{"version": 2}'
@@ -69,7 +75,7 @@ curl localhost:3000/api/ui-version            # {"version":2}
 Invoke-RestMethod -Method Put -Uri localhost:3000/api/ui-version -ContentType application/json -Body '{"version": 3}'
 ```
 
-The v1 / v2 / v3 buttons in each page's footer call the same endpoint. Demo credentials are `admin` / `password123`. For a side-by-side view of every layout, see [docs/ui-versions.md](docs/ui-versions.md). Project progress is logged in [status.md](status.md).
+The v1 / v2 / v3 buttons in each page's footer call the same endpoint. Demo credentials are `admin` / `password123`. For a side-by-side view of every layout, see [docs/ui-versions.md](docs/ui-versions.md). Pet hotel screens are in [docs/hotel.md](docs/hotel.md), and the queue of planned improvements is in [queue.md](queue.md). Project progress is logged in [status.md](status.md).
 
 ## A note on "chromedriver"
 

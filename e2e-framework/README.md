@@ -11,8 +11,10 @@ npm test             # Vitest unit tests (similarity, scoring, stores)
 npm run e2e          # all Playwright projects (starts the sample server automatically)
 npx playwright test --project framework       # healer integration tests against inline HTML
 npx playwright test --project v2-healed       # one UI version (runs v1-baseline first)
+npx playwright test --project hotel           # pet hotel journeys (admin, front desk, general staff)
 npm run store:serve  # run a shared element-store service (see "Remote store")
 npm run screenshots  # capture every UI version side by side into ../docs/ui-versions.md (sample server must be running)
+npm run screenshots:hotel  # capture the pet hotel screens into ../docs/hotel.md (sample server must be running)
 npm run typecheck
 ```
 
@@ -124,7 +126,9 @@ createDocumentStore(mongoClient.db('qa').collection('elements'));     // index {
 - `healEvents` (auto, test scope), which annotates each test with `self-healed` entries and attaches `self-healing.json`;
 - `healerOptions` (option), for tuning per project via `use: { healerOptions: { threshold: 0.7 } }`.
 
-`playwright.config.ts` defines four projects. `framework` covers the engine against inline HTML. `v1-baseline` records fingerprints with the v1 selectors. `v2-healed` and `v3-healed` depend on `v1-baseline` and must heal.
+`playwright.config.ts` defines five projects. `framework` covers the engine against inline HTML. `v1-baseline` records fingerprints with the v1 selectors. `v2-healed` and `v3-healed` depend on `v1-baseline` and must heal. `hotel` runs end-to-end journeys through the pet hotel staff app with plain role-based locators (the hotel has a single UI version, so there is nothing to heal yet).
+
+The `hotel` project's fixture (`e2e/hotel/fixtures.ts`) pins the server clock to 2026-11-20 with `PUT /api/test/clock`, resets the data before each test, and releases the clock afterwards. That keeps seeded arrivals, departures and care rounds predictable.
 
 ## Folder layout
 
@@ -150,8 +154,10 @@ e2e-framework/
 ├─ e2e/                        # tests for the sample apps
 │  ├─ fixtures.ts              # uiVersion option, data reset, page object fixtures
 │  ├─ pages/                   # loginPage, resultsPage, reportPage (v1 selectors only)
-│  └─ specs/                   # login, results (filter + row CRUD), report
-├─ scripts/captureScreenshots.ts  # generates ../docs/ui-versions.md
+│  ├─ specs/                   # login, results (filter + row CRUD), report
+│  └─ hotel/                   # pet hotel journeys: fixtures (pinned clock), admin, frontDesk, staff
+├─ scripts/captureScreenshots.ts       # generates ../docs/ui-versions.md
+├─ scripts/captureHotelScreenshots.ts  # generates ../docs/hotel.md
 ├─ tests/
 │  ├─ unit/                    # Vitest: similarity, scoring, store contract (all backends), config
 │  └─ integration/             # Playwright: healer against inline HTML fixtures
