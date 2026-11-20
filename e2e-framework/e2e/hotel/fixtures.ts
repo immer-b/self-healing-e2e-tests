@@ -30,6 +30,7 @@ export const test = base.extend<{ hotelServer: void }, { workerServer: string }>
   baseURL: useWorkerServerAsBaseURL,
   hotelServer: [
     async ({ request }, use) => {
+      await request.put('/api/ui-version', { data: { version: 1 } }); // the hotel journeys use the default layout
       await request.put('/api/test/clock', { data: { now: `${TODAY}T08:00:00` } });
       await request.post('/api/test/reset');
       await use();

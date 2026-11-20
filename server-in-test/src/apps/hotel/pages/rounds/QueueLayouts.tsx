@@ -11,6 +11,11 @@ export interface QueueLayoutProps {
   next?: TaskDetail;
 }
 
+/** Accessible names that stay the same in every layout, as they usually do in real redesigns. */
+const PROGRESS_LABEL = 'Rounds done today';
+const roundName = (task: TaskDetail) =>
+  `${task.pet?.name} · ${SLOT_LABELS[task.slot]} round${task.status === 'completed' ? ' · Done' : task.overdue ? ' · Overdue' : ''}`;
+
 const status = (task: TaskDetail) =>
   task.status === 'completed' ? <Badge tone="success">Done</Badge> : task.overdue ? <Badge tone="danger">Overdue</Badge> : null;
 
@@ -21,7 +26,7 @@ function QueueList({ tasks, done, next }: QueueLayoutProps) {
       <Card className="queue-summary">
         <div className="card-body" style={{ display: 'grid', gap: 10 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: 12, flexWrap: 'wrap' }}>
-            <strong id="round-progress" style={{ fontSize: 16 }}>
+            <strong id="round-progress" aria-label={PROGRESS_LABEL} style={{ fontSize: 16 }}>
               {done} of {tasks.length} done
             </strong>
             {next ? (
@@ -41,8 +46,8 @@ function QueueList({ tasks, done, next }: QueueLayoutProps) {
         {tasks.map((task) => {
           const isDone = task.status === 'completed';
           return (
-            <li key={task.id}>
-              <Link to={`/queue/${task.id}`} className={`queue-item ${isDone ? 'is-done' : ''}`}>
+            <li key={task.id} aria-label={roundName(task)}>
+              <Link to={`/queue/${task.id}`} className={`queue-item ${isDone ? 'is-done' : ''}`} aria-label={roundName(task)}>
                 <span className={`queue-slot ${task.slot === 'evening' ? 'is-evening' : ''}`} aria-hidden="true">
                   {SLOT_TIMES[task.slot].replace(':00', '')}
                 </span>
@@ -79,9 +84,9 @@ function QueueTable({ tasks, done }: QueueLayoutProps) {
     <section className="card rounds-table-card" data-ui-version="2" aria-label="Today's rounds">
       <div className="card-header">
         <h2>Today&apos;s rounds</h2>
-        <span className="pill-progress">
+        <strong className="pill-progress" aria-label={PROGRESS_LABEL}>
           Completed {done}/{tasks.length}
-        </span>
+        </strong>
       </div>
       <div className="table-wrap">
         <table className="table rounds-table">
@@ -95,10 +100,10 @@ function QueueTable({ tasks, done }: QueueLayoutProps) {
           </thead>
           <tbody>
             {tasks.map((task) => (
-              <tr key={task.id} className="round-row">
+              <tr key={task.id} className="round-row" aria-label={roundName(task)}>
                 <td className="nowrap">{SLOT_LABELS[task.slot]}</td>
                 <td>
-                  <Link to={`/queue/${task.id}`} className="round-open">
+                  <Link to={`/queue/${task.id}`} className="round-open" aria-label={roundName(task)}>
                     {task.pet?.name}
                   </Link>
                   {task.pet?.specialInstructions && task.status !== 'completed' && <div className="cell-sub">{task.pet.specialInstructions}</div>}
@@ -119,14 +124,14 @@ function QueueCards({ tasks, done }: QueueLayoutProps) {
   return (
     <div data-ui-version="3" className="round-cards-page">
       <p className="round-counter">
-        <span className="round-counter-value">
+        <strong className="round-counter-value" aria-label={PROGRESS_LABEL}>
           {done} / {tasks.length}
-        </span>{' '}
+        </strong>{' '}
         rounds done today
       </p>
       <div className="round-cards">
         {tasks.map((task) => (
-          <article key={task.id} className={`round-card ${task.status === 'completed' ? 'is-done' : ''}`}>
+          <article key={task.id} className={`round-card ${task.status === 'completed' ? 'is-done' : ''}`} aria-label={roundName(task)}>
             <header>
               <span className="round-card-slot">{SLOT_TIMES[task.slot]}</span>
               {status(task)}
@@ -135,7 +140,7 @@ function QueueCards({ tasks, done }: QueueLayoutProps) {
             <p className="muted">
               {task.room?.name} · {task.pet?.breed}
             </p>
-            <Link to={`/queue/${task.id}`} className="round-card-link">
+            <Link to={`/queue/${task.id}`} className="round-card-link" aria-label={roundName(task)}>
               {task.pet?.name}: begin round →
             </Link>
           </article>

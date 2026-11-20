@@ -30,11 +30,13 @@ function RoundCards(p: RoundLayoutProps) {
     <div data-ui-version="1">
       <div className="grid-sidebar">
         <div className="stack">
-          <div className="callout" role="note" aria-label="Special instructions">
+          <div className="callout">
             <Icon name="alert" />
             <div>
               <div className="callout-title">Special instructions</div>
-              <div id="special-instructions">{instructions(task)}</div>
+              <div id="special-instructions" role="note" aria-label="Special instructions">
+                {instructions(task)}
+              </div>
             </div>
           </div>
           <Card title="Checklist">
@@ -96,7 +98,9 @@ function RoundChecklist(p: RoundLayoutProps) {
     <div data-ui-version="2" className="round-v2">
       <aside className="round-v2-brief" aria-label="Before you start">
         <h2>Before you start</h2>
-        <p>{instructions(task)}</p>
+        <p role="note" aria-label="Special instructions">
+          {instructions(task)}
+        </p>
       </aside>
       <section className="card" aria-label="Room photo">
         <div className="card-body stack">
@@ -147,7 +151,9 @@ function RoundSteps(p: RoundLayoutProps) {
       <ol className="round-steps">
         <li className="round-step is-done">
           <h3>Read the notes for {task.pet?.name}</h3>
-          <blockquote className="round-step-quote">{instructions(task)}</blockquote>
+          <blockquote className="round-step-quote" role="note" aria-label="Special instructions">
+            {instructions(task)}
+          </blockquote>
         </li>
         <li className={`round-step ${task.cleaned ? 'is-done' : ''}`}>
           <label className="round-step-check">
