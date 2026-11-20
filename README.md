@@ -75,7 +75,7 @@ curl localhost:3000/api/ui-version            # {"version":2}
 Invoke-RestMethod -Method Put -Uri localhost:3000/api/ui-version -ContentType application/json -Body '{"version": 3}'
 ```
 
-The v1 / v2 / v3 buttons in each page's footer call the same endpoint. Demo credentials are `admin` / `password123`. For a side-by-side view of every layout, see [docs/ui-versions.md](docs/ui-versions.md). Pet hotel screens are in [docs/hotel.md](docs/hotel.md), and the queue of planned improvements is in [queue.md](queue.md). Project progress is logged in [status.md](status.md).
+The v1 / v2 / v3 buttons in each page's footer call the same endpoint. Demo credentials are `admin` / `password123`. For a side-by-side view of every layout, see [docs/ui-versions.md](docs/ui-versions.md). Pet hotel screens are in [docs/hotel.md](docs/hotel.md), and the queue of planned improvements is at the top of [status.md](status.md#improvement-queue). Project progress is logged in [status.md](status.md).
 
 ## A note on "chromedriver"
 
