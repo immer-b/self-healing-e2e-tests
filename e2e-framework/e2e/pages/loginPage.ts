@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import type { Healer } from '../../src/healing/healer';
+import type { Healer } from '../../src';
 
 /**
  * Login page object. Selectors are written against UI v1 only; on other versions the healer

@@ -1,17 +1,7 @@
 import type { ElementFingerprint } from '../fingerprint/types';
-import { sequenceSimilarity, setSimilarity, shapeSimilarity, textSimilarity, tokenize } from './similarity';
+import { FEATURES, type FeatureName } from './features';
 
-export interface FeatureWeights {
-  tag: number;
-  role: number;
-  type: number;
-  accessibleName: number;
-  text: number;
-  attributes: number;
-  context: number;
-  path: number;
-  structure: number;
-}
+export type FeatureWeights = Record<FeatureName, number>;
 
 export const DEFAULT_WEIGHTS: FeatureWeights = {
   tag: 2,
@@ -26,8 +16,8 @@ export const DEFAULT_WEIGHTS: FeatureWeights = {
 };
 
 /**
- * For dynamic text only the value's format (see shapeSimilarity) is compared, at this fraction of the
- * normal text weight; the remainder moves to context.
+ * For dynamic text only the value's format is compared, at this fraction of the normal text weight;
+ * the remainder moves to context.
  */
 const DYNAMIC_TEXT_FACTOR = 0.5;
 
@@ -41,96 +31,29 @@ export interface ScoreOptions {
 
 export interface ScoreResult {
   score: number;
-  breakdown: Partial<Record<keyof FeatureWeights, number>>;
+  breakdown: Partial<Record<FeatureName, number>>;
 }
 
-const TAG_FAMILIES = [
-  ['input', 'textarea', 'select'],
-  ['button', 'a'],
-  ['tr', 'li', 'article', 'div', 'section'],
-  ['td', 'th', 'span', 'dd', 'div', 'p', 'strong'],
-  ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'],
-  ['table', 'ul', 'ol', 'div', 'dl'],
-];
-
-const ROLE_FAMILIES = [
-  ['textbox', 'searchbox', 'combobox'],
-  ['button', 'link', 'menuitem', 'tab'],
-  ['row', 'listitem', 'article', 'group'],
-  ['cell', 'gridcell', 'rowheader', 'definition'],
-  ['table', 'grid', 'list'],
-  ['alert', 'status'],
-  ['dialog', 'region', 'complementary'],
-];
-
-const familyMatch = (families: string[][], a: string, b: string) => {
-  if (a === b) return 1;
-  return families.some((f) => f.includes(a) && f.includes(b)) ? 0.5 : 0;
-};
-
-const ratio = (a: number, b: number) => 1 - Math.abs(a - b) / Math.max(a, b, 1);
-
-/** Bag of identifier-ish tokens: id, classes and descriptive attributes. */
-const attributeTokens = (f: ElementFingerprint) =>
-  tokenize([f.id, ...f.classes, ...Object.entries(f.attributes).filter(([k]) => k !== 'type').map(([, v]) => v)].join(' '));
-
-function contextSimilarity(a: ElementFingerprint['context'], b: ElementFingerprint['context']): number | undefined {
-  const pairs: [string, string][] = [
-    [a.label, b.label],
-    [a.ancestorLabels.join(' '), b.ancestorLabels.join(' ')],
-    [a.parentText, b.parentText],
-  ];
-  const present = pairs.filter(([x]) => x);
-  if (!present.length) return undefined;
-  // The baseline's label may now live in a different context slot, so also compare across slots.
-  const aAll = pairs.map(([x]) => x).filter(Boolean);
-  const bAll = pairs.map(([, y]) => y).filter(Boolean);
-  const cross = Math.max(0, ...aAll.flatMap((x) => bAll.map((y) => textSimilarity(x, y))));
-  const aligned = present.reduce((sum, [x, y]) => sum + textSimilarity(x, y), 0) / present.length;
-  // A direct label match is the most specific signal, so it is not diluted by the other slots.
-  const labelMatch = textSimilarity(a.label, b.label);
-  return Math.max(labelMatch, aligned, cross * 0.9);
-}
-
-/** Compares a baseline fingerprint against a candidate; `score` is a weighted mean in [0, 1]. */
-export function scoreFingerprint(
-  baseline: ElementFingerprint,
-  candidate: ElementFingerprint,
-  { dynamicText = false, ignoreContent = false, weights: overrides }: ScoreOptions = {},
-): ScoreResult {
-  const weights = { ...DEFAULT_WEIGHTS, ...overrides };
+function effectiveWeights({ dynamicText, weights }: ScoreOptions): FeatureWeights {
+  const result = { ...DEFAULT_WEIGHTS, ...weights };
   if (dynamicText) {
     // Text is unreliable, so the surrounding context (labels, captions) has to identify the element.
-    weights.context += weights.text * (1 - DYNAMIC_TEXT_FACTOR);
-    weights.text *= DYNAMIC_TEXT_FACTOR;
+    result.context += result.text * (1 - DYNAMIC_TEXT_FACTOR);
+    result.text *= DYNAMIC_TEXT_FACTOR;
   }
+  return result;
+}
 
-  // Only features the baseline actually has are scored: a candidate is not penalised for carrying
-  // extra information (e.g. classes) that the baseline element never had.
-  const baselineTokens = attributeTokens(baseline);
-  const typeA = baseline.attributes.type;
-
-  const features: Partial<Record<keyof FeatureWeights, number | undefined>> = {
-    tag: familyMatch(TAG_FAMILIES, baseline.tag, candidate.tag),
-    role: baseline.role ? familyMatch(ROLE_FAMILIES, baseline.role, candidate.role) : undefined,
-    type: typeA ? Number(typeA === candidate.attributes.type) : undefined,
-    accessibleName: baseline.accessibleName ? textSimilarity(baseline.accessibleName, candidate.accessibleName) : undefined,
-    text:
-      !baseline.text || ignoreContent
-        ? undefined
-        : dynamicText
-          ? shapeSimilarity(baseline.text, candidate.text)
-          : textSimilarity(baseline.text, candidate.text),
-    attributes: baselineTokens.length ? setSimilarity(baselineTokens, attributeTokens(candidate)) : undefined,
-    context: ignoreContent ? undefined : contextSimilarity(baseline.context, candidate.context),
-    path: sequenceSimilarity(baseline.path, candidate.path),
-    structure: (ratio(baseline.childCount, candidate.childCount) + ratio(baseline.textLength, candidate.textLength)) / 2,
-  };
+/** Compares a baseline fingerprint against a candidate; `score` is the weighted mean of applicable features. */
+export function scoreFingerprint(baseline: ElementFingerprint, candidate: ElementFingerprint, options: ScoreOptions = {}): ScoreResult {
+  const weights = effectiveWeights(options);
+  const ctx = { dynamicText: options.dynamicText ?? false, ignoreContent: options.ignoreContent ?? false };
 
   let total = 0;
   let weightSum = 0;
   const breakdown: ScoreResult['breakdown'] = {};
-  for (const [name, value] of Object.entries(features) as [keyof FeatureWeights, number | undefined][]) {
+  for (const [name, feature] of Object.entries(FEATURES) as [FeatureName, (typeof FEATURES)[FeatureName]][]) {
+    const value = feature(baseline, candidate, ctx);
     if (value === undefined) continue;
     breakdown[name] = value;
     total += value * weights[name];

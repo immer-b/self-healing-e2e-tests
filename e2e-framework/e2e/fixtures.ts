@@ -1,4 +1,4 @@
-import { test as healingTest } from '../src/playwright/fixtures';
+import { test as healingTest } from '../src';
 import { createLoginPage, type LoginPage } from './pages/loginPage';
 import { createResultsPage, type ResultsPage } from './pages/resultsPage';
 import { createReportPage, type ReportPage } from './pages/reportPage';

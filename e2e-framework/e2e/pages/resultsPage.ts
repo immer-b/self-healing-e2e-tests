@@ -1,5 +1,5 @@
 import type { Locator, Page } from '@playwright/test';
-import type { Healer } from '../../src/healing/healer';
+import type { Healer } from '../../src';
 
 export interface RecordValues {
   name: string;

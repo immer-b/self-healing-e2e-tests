@@ -1,5 +1,5 @@
 import type { Download, Page } from '@playwright/test';
-import type { Healer } from '../../src/healing/healer';
+import type { Healer } from '../../src';
 
 export type Metric = 'totalRecords' | 'totalAmount' | 'averageAmount' | 'active' | 'inactive' | 'pending';
 
