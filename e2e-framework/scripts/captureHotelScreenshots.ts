@@ -157,7 +157,8 @@ async function capture(browser: Browser, shot: Shot) {
   } else {
     await page.getByRole('heading', { name: 'Sign in' }).waitFor();
   }
-  await page.waitForLoadState('networkidle');
+  // Not 'networkidle': the live-updates stream (Server-Sent Events) keeps a request open.
+  await page.waitForFunction(() => !document.querySelector('.loading'));
   await shot.prepare?.(page);
   await page.waitForTimeout(250);
   await page.screenshot({ path: join(SHOTS_DIR, `hotel-${shot.name}.png`), fullPage: !shot.mobile && !shot.viewportOnly });

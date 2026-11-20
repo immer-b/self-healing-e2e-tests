@@ -122,6 +122,21 @@ export function hotelRoutes(hotel: Hotel) {
     res.status(403).json({ error: 'Choose a new password to continue', code: 'password_change_required' });
   });
 
+  /* ---------- live updates ---------- */
+
+  // Server-Sent Events: one `change` event per audited write, so open pages can refetch.
+  router.get('/events', (req, res) => {
+    res.set({ 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-cache', Connection: 'keep-alive', 'X-Accel-Buffering': 'no' });
+    res.flushHeaders();
+    res.write('retry: 5000\n\n');
+    const unsubscribe = hotel.audit.subscribe((event) => res.write(`event: change\ndata: ${JSON.stringify(event)}\n\n`));
+    const heartbeat = setInterval(() => res.write(': keep-alive\n\n'), 25_000);
+    req.on('close', () => {
+      clearInterval(heartbeat);
+      unsubscribe();
+    });
+  });
+
   /* ---------- employees (admin) ---------- */
 
   router.get('/employees/staff', DESK, (_req, res) => {

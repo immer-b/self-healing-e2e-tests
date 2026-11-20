@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon';
 import { Avatar, Badge, Card, EmptyState, ErrorBanner, Loading, PageHeader, useToast } from '../components/ui';
 import { ROOM_TONE, SLOT_LABELS, SLOT_TIMES, formatLongDate, useResource } from '../lib';
 import { DateNav } from './TodayPage';
+import { useLiveUpdates } from '../liveUpdates';
 
 export function SchedulePage(_props: { params: Record<string, string> }) {
   const { today } = useEmployee();
@@ -14,6 +15,10 @@ export function SchedulePage(_props: { params: Record<string, string> }) {
   const board = useResource(() => api.board(date), [date]);
   const [onShift, setOnShift] = useState<Set<string>>(new Set());
   const [busy, setBusy] = useState(false);
+  useLiveUpdates(['task', 'stay', 'employee'], () => {
+    board.reload();
+    staff.reload();
+  });
   const [error, setError] = useState<string>();
 
   useEffect(() => {

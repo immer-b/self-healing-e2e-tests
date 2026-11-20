@@ -4,10 +4,12 @@ import { Icon } from '../components/Icon';
 import { Badge, Card, EmptyState, ErrorBanner, Loading, PageHeader } from '../components/ui';
 import { ROOM_TYPE_LABELS, SLOT_LABELS, SLOT_TIMES, formatLongDate, useResource } from '../lib';
 import { Link } from '../router';
+import { useLiveUpdates } from '../liveUpdates';
 
 export function QueuePage(_props: { params: Record<string, string> }) {
   const { employee, today } = useEmployee();
   const { data: tasks, error, reload } = useResource(() => api.myTasks(), []);
+  useLiveUpdates(['task'], reload);
   const done = tasks?.filter((t) => t.status === 'completed').length ?? 0;
   const next = tasks?.find((t) => t.status === 'pending');
 

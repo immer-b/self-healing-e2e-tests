@@ -5,6 +5,7 @@ import { Icon } from '../components/Icon';
 import { Badge, Card, EmptyState, ErrorBanner, Loading, PageHeader, StatCard, useToast } from '../components/ui';
 import { ROOM_TONE, STAY_STATUS, SPECIES_LABELS, addDays, formatDate, formatLongDate, nights, plural, useResource } from '../lib';
 import { Link } from '../router';
+import { useLiveUpdates } from '../liveUpdates';
 
 export function DateNav({ date, onChange, today }: { date: string; onChange: (date: string) => void; today: string }) {
   return (
@@ -33,6 +34,11 @@ export function TodayPage(_props: { params: Record<string, string> }) {
   const dashboard = useResource(() => api.dashboard(date), [date]);
   const arrivals = useResource(() => api.arrivals(date), [date]);
   const departures = useResource(() => api.departures(date), [date]);
+  useLiveUpdates(['stay', 'task', 'pet'], () => {
+    arrivals.reload();
+    departures.reload();
+    dashboard.reload();
+  });
 
   const act = async (action: () => Promise<Stay>, message: (stay: Stay) => string) => {
     try {
