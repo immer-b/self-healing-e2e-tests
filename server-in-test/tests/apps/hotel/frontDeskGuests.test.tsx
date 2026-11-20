@@ -136,7 +136,7 @@ describe('front desk: pets', () => {
     await user.click(within(dialog()).getByRole('button', { name: /archive pet/i }));
     await waitFor(() => expect(screen.queryByText('Max')).not.toBeInTheDocument());
     await user.click(screen.getByLabelText(/show archived/i));
-    expect(row('Max')).toHaveTextContent('Archived');
+    await waitFor(() => expect(row('Max')).toHaveTextContent('Archived'));
   });
 
   it('refuses to archive a pet that is staying with us', async () => {
