@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { assignEvenly, careSlotsFor, planCareTasks, workload } from '../../../src/server/hotel/scheduling';
+import type { StayStatus } from '../../../src/server/hotel/types';
 
-const stay = (id: string, petId: string, checkIn: string, checkOut: string, status = 'checked_in') =>
-  ({ id, petId, roomId: `room-${petId}`, checkIn, checkOut, status }) as const;
+const stay = (id: string, petId: string, checkIn: string, checkOut: string, status: StayStatus = 'checked_in') =>
+  ({ id, petId, roomId: `room-${petId}`, checkIn, checkOut, status });
 
 describe('careSlotsFor', () => {
   const s = stay('s1', 'p1', '2026-11-20', '2026-11-23');
