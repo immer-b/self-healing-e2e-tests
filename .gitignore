@@ -11,3 +11,5 @@ server-in-test/.e2e-data/
 e2e-framework/e2e/**/*-win32.png
 e2e-framework/e2e/**/*-darwin.png
 coverage/
+server-in-test/.stryker-tmp/
+server-in-test/reports/

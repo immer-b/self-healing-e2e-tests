@@ -57,7 +57,7 @@ The order within each list is the suggested priority.
 | T8 | Done 2026-11-20 (written and validated; not yet run on GitHub) | CI workflow: typecheck, unit, e2e, upload the Playwright report, repeat UI tests 3 times to catch flakiness | Nothing runs automatically today | Yes | GitHub Actions on Ubuntu with Node 22 | S |
 | T9 | Queued | Versioned hotel layouts (v2/v3 for Today, Schedule and Queue) with page objects that go through the healer | Takes the self-healing demo from toy pages to a realistic app | Yes | Follow the existing `LAYOUTS[version]` pattern. Start with the staff queue and round pages | L |
 | T10 | Queued | Parallel e2e: one server per Playwright worker | `workers: 1` because data and UI version are global | Yes | Start the server per worker on `3100 + workerIndex` from a worker fixture | M |
-| T11 | Queued | Mutation testing (Stryker) on `src/server/hotel` | Shows which assertions are weak, as was done by hand for the framework | Yes | Run nightly, not on every commit | M |
+| T11 | Done 2026-11-20 (score 89.7% on the domain modules; npm run mutation) | Mutation testing (Stryker) on `src/server/hotel` | Shows which assertions are weak, as was done by hand for the framework | Yes | Run nightly, not on every commit | M |
 | T12 | Done 2026-11-20 | API contract snapshot: fail when a response shape changes without the UI types changing | The UI and server share TypeScript types, but the joined views (`pet`, `owner`, `room`) are built by hand | Yes | Snapshot of the response keys per endpoint | S |
 | T13 | Queued | Dark-mode screenshots and a contrast check | Dark mode exists but is never captured | Yes | Add `colorScheme: 'dark'` variants to the screenshot script | S |
 
