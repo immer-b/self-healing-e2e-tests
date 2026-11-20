@@ -130,7 +130,10 @@ describe('pet validation', () => {
   it('accepts a pet', () => {
     expect(validatePet({ name: 'Biscuit', species: 'dog', breed: 'Beagle', ownerId: 'own-1', specialInstructions: '' })).toEqual({
       ok: true,
-      value: { name: 'Biscuit', species: 'dog', breed: 'Beagle', ownerId: 'own-1', specialInstructions: '' },
+      value: {
+        name: 'Biscuit', species: 'dog', breed: 'Beagle', ownerId: 'own-1', specialInstructions: '',
+        dateOfBirth: '', weightLbs: null, vet: { name: '', phone: '' }, vaccinations: [],
+      },
     });
   });
 

@@ -142,12 +142,38 @@ export function PetsPage(_props: { params: Record<string, string> }) {
   );
 }
 
-const EMPTY_PET: PetInput = { name: '', species: 'dog', breed: '', ownerId: '', specialInstructions: '' };
+const EMPTY_PET: PetInput = {
+  name: '',
+  species: 'dog',
+  breed: '',
+  ownerId: '',
+  specialInstructions: '',
+  dateOfBirth: '',
+  weightLbs: null,
+  vet: { name: '', phone: '' },
+  vaccinations: [],
+};
 
 export function PetDialog({ pet, onClose, onSaved }: { pet?: Pet; onClose: () => void; onSaved: (pet: Pet) => void }) {
   const [values, setValues] = useState<PetInput>(
-    pet ? { name: pet.name, species: pet.species, breed: pet.breed, ownerId: pet.ownerId, specialInstructions: pet.specialInstructions } : EMPTY_PET,
+    pet
+      ? {
+          name: pet.name,
+          species: pet.species,
+          breed: pet.breed,
+          ownerId: pet.ownerId,
+          specialInstructions: pet.specialInstructions,
+          dateOfBirth: pet.dateOfBirth ?? '',
+          weightLbs: pet.weightLbs ?? null,
+          vet: pet.vet ?? { name: '', phone: '' },
+          vaccinations: pet.vaccinations ?? [],
+        }
+      : EMPTY_PET,
   );
+  const [weight, setWeight] = useState(pet?.weightLbs ? String(pet.weightLbs) : '');
+  const vaccinations = values.vaccinations ?? [];
+  const setVaccination = (index: number, field: 'name' | 'expiresOn', value: string) =>
+    setValues((v) => ({ ...v, vaccinations: (v.vaccinations ?? []).map((x, i) => (i === index ? { ...x, [field]: value } : x)) }));
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [general, setGeneral] = useState<string>();
   const owners = useResource(() => api.owners(), []);
@@ -156,7 +182,8 @@ export function PetDialog({ pet, onClose, onSaved }: { pet?: Pet; onClose: () =>
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     try {
-      onSaved(pet ? await api.updatePet(pet.id, values) : await api.createPet(values));
+      const payload = { ...values, weightLbs: (weight === '' ? null : weight) as unknown as number | null };
+      onSaved(pet ? await api.updatePet(pet.id, payload) : await api.createPet(payload));
     } catch (e) {
       const { general: message, fields } = fieldErrors(e);
       setErrors(fields);
@@ -201,6 +228,41 @@ export function PetDialog({ pet, onClose, onSaved }: { pet?: Pet; onClose: () =>
           onChange={set('specialInstructions')}
           hint="Diet, medication, temperament. Shown to staff on every care round."
         />
+        <p className="form-section-title">Profile</p>
+        <div className="form-row">
+          <TextField label="Date of birth" type="date" value={values.dateOfBirth ?? ''} onChange={set('dateOfBirth')} error={errors.dateOfBirth} />
+          <TextField label="Weight (lb)" type="number" min={0} step="0.1" value={weight} onChange={(e) => setWeight(e.target.value)} error={errors.weightLbs} />
+        </div>
+        <div className="form-row">
+          <TextField label="Vet name" value={values.vet?.name ?? ''} onChange={(e) => setValues((v) => ({ ...v, vet: { name: e.target.value, phone: v.vet?.phone ?? '' } }))} />
+          <TextField
+            label="Vet phone"
+            type="tel"
+            value={values.vet?.phone ?? ''}
+            onChange={(e) => setValues((v) => ({ ...v, vet: { name: v.vet?.name ?? '', phone: e.target.value } }))}
+            error={errors['vet.phone']}
+          />
+        </div>
+        <p className="form-section-title">Vaccinations</p>
+        {vaccinations.map((vaccination, i) => (
+          <div className="phone-row" key={i}>
+            <TextField label="Vaccine" value={vaccination.name} onChange={(e) => setVaccination(i, 'name', e.target.value)} error={errors[`vaccinations.${i}.name`]} />
+            <TextField label="Expires on" type="date" value={vaccination.expiresOn} onChange={(e) => setVaccination(i, 'expiresOn', e.target.value)} error={errors[`vaccinations.${i}.expiresOn`]} />
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={`Remove ${vaccination.name || 'vaccination'}`}
+              onClick={() => setValues((v) => ({ ...v, vaccinations: (v.vaccinations ?? []).filter((_, j) => j !== i) }))}
+            >
+              <Icon name="close" />
+            </button>
+          </div>
+        ))}
+        <div>
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setValues((v) => ({ ...v, vaccinations: [...(v.vaccinations ?? []), { name: '', expiresOn: '' }] }))}>
+            <Icon name="plus" size={14} /> Add vaccination
+          </button>
+        </div>
       </form>
     </Modal>
   );

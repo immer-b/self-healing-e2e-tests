@@ -7,9 +7,10 @@ import { ROOM_TONE, ROOM_TYPE_LABELS, SPECIES_LABELS, STAY_STATUS, addDays, fiel
 import { Link } from '../router';
 import { PetDialog } from './PetsPage';
 import { downloadCsv, slug, toCsv } from '../csv';
+import { vaccinationStatus } from '../../../server/hotel/petProfile';
 
 export function PetDetailPage({ params }: { params: Record<string, string> }) {
-  const { employee } = useEmployee();
+  const { employee, today } = useEmployee();
   const toast = useToast();
   const petId = params.id;
   const pet = useResource(() => api.pet(petId), [petId]);
@@ -23,6 +24,8 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
   if (pet.error) return <ErrorBanner>{pet.error}</ErrorBanner>;
   if (!pet.data) return <Loading />;
   const p = pet.data;
+  const shots = vaccinationStatus(p.vaccinations ?? [], today);
+  const lapsed = shots.filter((v) => v.status === 'expired');
 
   return (
     <>
@@ -54,6 +57,12 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
           </>
         }
       />
+      {lapsed.length > 0 && (
+        <div className="banner banner-danger" role="status" style={{ marginBottom: 18 }}>
+          <Icon name="alert" />
+          {lapsed.map((v) => `${v.name} vaccination expired on ${formatDate(v.expiresOn)}`).join(' · ')}. Ask the owner for an updated record.
+        </div>
+      )}
       {p.deletedAt && (
         <div className="banner banner-warning" style={{ marginBottom: 18 }}>
           <Icon name="archive" /> This pet is archived. Their record is kept for reference.
@@ -72,6 +81,38 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
           <NotesCard petId={p.id} petName={p.name} />
         </div>
         <div className="stack">
+          <Card title="Profile">
+            <div className="card-body stack">
+              <dl className="details">
+                <dt>Age</dt>
+                <dd>{p.dateOfBirth ? age(p.dateOfBirth, today) : '—'}</dd>
+                <dt>Weight</dt>
+                <dd>{p.weightLbs ? `${p.weightLbs} lb` : '—'}</dd>
+                <dt>Vet</dt>
+                <dd>
+                  {p.vet?.name || '—'}
+                  {p.vet?.phone && <div className="cell-sub">{p.vet.phone}</div>}
+                </dd>
+              </dl>
+              {shots.length ? (
+                <ul className="vaccine-list" aria-label="Vaccinations">
+                  {shots.map((v) => (
+                    <li key={v.name} aria-label={v.name}>
+                      <span>
+                        <strong>{v.name}</strong>
+                        <span className="cell-sub"> · expires {formatDate(v.expiresOn)}</span>
+                      </span>
+                      <Badge tone={v.status === 'expired' ? 'danger' : v.status === 'expiring' ? 'warning' : 'success'}>
+                        {v.status === 'expired' ? 'Expired' : v.status === 'expiring' ? 'Expiring soon' : 'Current'}
+                      </Badge>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="muted">No vaccinations on file.</p>
+              )}
+            </div>
+          </Card>
           <Card title="Owner">
             <div className="card-body">
               {owner.data ? (
@@ -168,6 +209,16 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
       )}
     </>
   );
+}
+
+/** Whole years, or months for pets under a year. */
+function age(dateOfBirth: string, today: string) {
+  const [by, bm, bd] = dateOfBirth.split('-').map(Number);
+  const [ty, tm, td] = today.split('-').map(Number);
+  const months = (ty - by) * 12 + (tm - bm) - (td < bd ? 1 : 0);
+  if (months < 12) return `${Math.max(months, 0)} ${months === 1 ? 'month' : 'months'}`;
+  const years = Math.floor(months / 12);
+  return `${years} ${years === 1 ? 'year' : 'years'}`;
 }
 
 function StaysCard({

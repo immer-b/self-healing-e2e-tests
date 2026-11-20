@@ -82,11 +82,13 @@ const OWNERS: OwnerInput[] = [
 ];
 
 // ownerIndex is 0-based into OWNERS.
-const PETS: (Omit<PetInput, 'ownerId'> & { ownerIndex: number })[] = [
-  { name: 'Biscuit', species: 'dog', breed: 'Beagle', ownerIndex: 0, specialInstructions: 'Grain-free kibble, 1 cup twice daily. Pulls on the leash.' },
-  { name: 'Mochi', species: 'cat', breed: 'Siamese', ownerIndex: 0, specialInstructions: 'Wet food only. Hides when nervous, approach slowly.' },
-  { name: 'Duke', species: 'dog', breed: 'German Shepherd', ownerIndex: 1, specialInstructions: 'Hip dysplasia: 1 carprofen tablet with breakfast.' },
-  { name: 'Luna', species: 'dog', breed: 'Golden Retriever', ownerIndex: 2, specialInstructions: 'Allergic to chicken. Check treats.' },
+// Vaccination expiry is given in days from today so the seed never goes stale.
+type SeedPet = Omit<PetInput, 'ownerId' | 'vaccinations'> & { ownerIndex: number; vaccinations?: { name: string; expiresIn: number }[] };
+const PETS: SeedPet[] = [
+  { name: 'Biscuit', dateOfBirth: '2020-05-14', weightLbs: 28, vet: { name: 'Eastside Animal Clinic', phone: '(503) 555-0175' }, vaccinations: [{ name: 'Rabies', expiresIn: 162 }, { name: 'DHPP', expiresIn: 56 }, { name: 'Bordetella', expiresIn: 15 }],  species: 'dog', breed: 'Beagle', ownerIndex: 0, specialInstructions: 'Grain-free kibble, 1 cup twice daily. Pulls on the leash.' },
+  { name: 'Mochi', dateOfBirth: '2019-09-02', weightLbs: 9, vaccinations: [{ name: 'Rabies', expiresIn: 110 }, { name: 'FVRCP', expiresIn: 110 }],  species: 'cat', breed: 'Siamese', ownerIndex: 0, specialInstructions: 'Wet food only. Hides when nervous, approach slowly.' },
+  { name: 'Duke', dateOfBirth: '2016-02-20', weightLbs: 82, vet: { name: 'Pearl District Vet', phone: '(503) 555-0180' }, vaccinations: [{ name: 'Rabies', expiresIn: -5 }, { name: 'DHPP', expiresIn: 73 }],  species: 'dog', breed: 'German Shepherd', ownerIndex: 1, specialInstructions: 'Hip dysplasia: 1 carprofen tablet with breakfast.' },
+  { name: 'Luna', dateOfBirth: '2022-07-08', weightLbs: 61, vet: { name: 'Dr. Hannah Cole', phone: '(503) 555-0170' }, vaccinations: [{ name: 'Rabies', expiresIn: 223 }, { name: 'Bordetella', expiresIn: 61 }],  species: 'dog', breed: 'Golden Retriever', ownerIndex: 2, specialInstructions: 'Allergic to chicken. Check treats.' },
   { name: 'Pepper', species: 'cat', breed: 'Maine Coon', ownerIndex: 3, specialInstructions: '' },
   { name: 'Rocky', species: 'dog', breed: 'French Bulldog', ownerIndex: 3, specialInstructions: 'Brachycephalic: no exercise in the heat. Water bowl always full.' },
   { name: 'Hazel', species: 'other', breed: 'Holland Lop rabbit', ownerIndex: 4, specialInstructions: 'Unlimited timothy hay. Fresh greens in the evening.' },
@@ -125,7 +127,12 @@ export function seedHotel({ hotel, store, today }: { hotel: Hotel; store: HotelS
 
   const rooms = ROOMS.map((room) => hotel.rooms.create(room, actor).value!);
   const owners = OWNERS.map((owner) => hotel.owners.create(owner, actor).value!);
-  const pets = PETS.map(({ ownerIndex, ...pet }) => hotel.pets.create({ ...pet, ownerId: owners[ownerIndex].id }, actor).value!);
+  const pets = PETS.map(({ ownerIndex, vaccinations = [], ...pet }) =>
+    hotel.pets.create(
+      { ...pet, ownerId: owners[ownerIndex].id, vaccinations: vaccinations.map((v) => ({ name: v.name, expiresOn: addDays(today, v.expiresIn) })) },
+      actor,
+    ).value!,
+  );
 
   for (const [petIndex, roomName, inOffset, outOffset, status] of STAYS) {
     const roomId = rooms.find((r) => r.name === roomName)!.id;

@@ -78,6 +78,16 @@ export interface PetInput {
   ownerId: string;
   /** Standing instructions shown to staff on every care task (diet, medication, temperament). */
   specialInstructions: string;
+  /** Optional profile; validation fills empty defaults. */
+  dateOfBirth?: IsoDate | '';
+  weightLbs?: number | null;
+  vet?: { name: string; phone: string };
+  vaccinations?: Vaccination[];
+}
+
+export interface Vaccination {
+  name: string;
+  expiresOn: IsoDate;
 }
 export type Pet = Entity<PetInput>;
 

@@ -170,12 +170,38 @@ export function validateOwner(body: unknown, { partial = false }: Options = {}) 
 
 /* ---------- pets ---------- */
 
+const optionalDate: FieldValidator = (raw) => (raw === undefined || raw === null || raw === '' ? { value: '' } : isoDate(raw));
+
+const optionalPositiveNumber: FieldValidator = (raw) => {
+  if (raw === undefined || raw === null || raw === '') return { value: null };
+  const value = typeof raw === 'string' ? Number(raw) : raw;
+  return typeof value === 'number' && Number.isFinite(value) && value > 0 ? { value } : { error: 'must be a positive number' };
+};
+
+const vet: FieldValidator = (raw) => nested<{ name: string; phone: string }>({ name: optionalText, phone: optionalPhone })(raw ?? {});
+
+const vaccinations: FieldValidator = (raw) => {
+  if (raw === undefined || raw === null) return { value: [] };
+  if (!Array.isArray(raw)) return { error: 'must be a list' };
+  const errors: Errors = {};
+  const value = raw.map((v, i) => {
+    const result = validateFields<{ name: string; expiresOn: string }>(v, { name: requiredText, expiresOn: isoDate }, false);
+    if (!result.ok) Object.assign(errors, prefixErrors(String(i), result.errors));
+    return result.ok ? result.value : undefined;
+  });
+  return Object.keys(errors).length ? { errors } : { value };
+};
+
 const PET_FIELDS: Record<keyof PetInput, FieldValidator> = {
   name: requiredText,
   species: oneOf(SPECIES),
   breed: requiredText,
   ownerId: requiredText,
   specialInstructions: optionalText,
+  dateOfBirth: optionalDate,
+  weightLbs: optionalPositiveNumber,
+  vet,
+  vaccinations,
 };
 
 export function validatePet(body: unknown, options: { partial: true }): ValidationResult<Partial<PetInput>>;
