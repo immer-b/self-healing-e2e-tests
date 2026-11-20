@@ -1,0 +1,10 @@
+{
+  "name": "self-healing-playwright",
+  "private": true,
+  "workspaces": ["server-in-test", "e2e-framework"],
+  "scripts": {
+    "test:unit": "npm run test --workspace server-in-test && npm run test --workspace e2e-framework",
+    "test:e2e": "npm run e2e --workspace e2e-framework",
+    "test": "npm run test:unit && npm run test:e2e"
+  }
+}
