@@ -6,7 +6,7 @@
   "scripts": {
     "build": "vite build",
     "start": "tsx src/server/index.ts",
-    "serve": "npm run build && npm run start",
+    "serve": "npm run build && tsx src/server/index.ts --test-routes",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

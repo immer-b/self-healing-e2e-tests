@@ -8,9 +8,9 @@ The sample application the self-healing framework is tested against: a **Node + 
 ## Scripts
 
 ```bash
-npm run serve       # vite build + start the server (PORT, default 3000; starts on UI v1)
+npm run serve       # vite build + start the server with test-support routes on (PORT, default 3000; starts on UI v1)
 npm run build       # build the SPAs (hotel, login, query, report) into dist/client
-npm start           # start the server only (expects dist/client to exist)
+npm start           # start the server only, test-support routes off unless ENABLE_TEST_ROUTES=1 (expects dist/client)
 npm test            # Vitest: API, domain logic and React component tests
 npm run typecheck   # tsc --noEmit
 ```

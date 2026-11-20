@@ -34,6 +34,7 @@ describe('HTTP API', () => {
       users: DEFAULT_USERS,
       clientDir: makeClientDir(),
       hotel: createHotel({ clock: createClock(new Date('2026-11-20T08:00:00')) }),
+      enableTestRoutes: true,
     });
   });
 

@@ -18,7 +18,7 @@ The order within each list is the suggested priority.
 
 | # | Status | Item | Why | Doable? | Assumption | Size |
 | --- | --- | --- | --- | --- | --- | --- |
-| S1 | Queued | Disable `/api/test/*` unless `ENABLE_TEST_ROUTES=1` | Today anyone can reset all data or move the clock on a deployed server | Yes | Playwright's `webServer` and the screenshot scripts set the flag. `npm run serve` stays open for local demos | S |
+| S1 | Done 2026-11-20 | Disable `/api/test/*` unless `ENABLE_TEST_ROUTES=1` | Today anyone can reset all data or move the clock on a deployed server | Yes | Playwright's `webServer` and the screenshot scripts set the flag. `npm run serve` stays open for local demos | S |
 | S2 | Queued | Rate-limit sign-in and lock out after repeated failures | Stops password guessing | Yes | 5 failures per username and IP within 15 minutes means a 15-minute lockout. Kept in memory like the rest of the data | S |
 | S3 | Queued | Check `Origin` on state-changing requests and add security headers (CSP, `X-Content-Type-Options`, `Referrer-Policy`) | Defence in depth on top of `SameSite=Strict` cookies | Yes | Same-origin only. CSP allows `self` plus `blob:`/`data:` images | S |
 | S4 | Queued | Persist data in SQLite (`node:sqlite`) behind the existing entity store interface | Data is lost on restart. This is the biggest gap to production | Yes | One file under `server-in-test/data/`. The store interface stays the same, so the domain code and tests keep working. Tests keep using the in-memory store | L |

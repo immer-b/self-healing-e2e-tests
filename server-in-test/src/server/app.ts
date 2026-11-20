@@ -18,16 +18,18 @@ export interface AppOptions {
   clientDir: string;
   /** The pet hotel domain. Defaults to a seeded hotel on the real clock. */
   hotel?: Hotel;
+  /** Mount /api/test/* (reset, clock). Off unless asked for: never enable in production. */
+  enableTestRoutes?: boolean;
 }
 
-export function createApp({ repository, users, clientDir, hotel = createHotel({ clock: createClock() }) }: AppOptions) {
-  return express()
+export function createApp({ repository, users, clientDir, hotel = createHotel({ clock: createClock() }), enableTestRoutes = false }: AppOptions) {
+  const app = express()
     .use(express.json())
     .use('/api', authRoutes(users))
     .use('/api/records', recordRoutes(repository))
     .use('/api/report', reportRoutes(repository))
     .use('/api/ui-version', uiVersionRoutes(createUiVersionState()))
-    .use('/api/hotel', hotelRoutes(hotel))
-    .use('/api/test', testSupportRoutes(repository, hotel))
-    .use(spaRoutes(clientDir));
+    .use('/api/hotel', hotelRoutes(hotel));
+  if (enableTestRoutes) app.use('/api/test', testSupportRoutes(repository, hotel));
+  return app.use(spaRoutes(clientDir));
 }
