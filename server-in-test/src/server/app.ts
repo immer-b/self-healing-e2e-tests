@@ -10,6 +10,7 @@ import { createUiVersionState, uiVersionRoutes } from './routes/uiVersionRoutes'
 import { createClock } from './hotel/clock';
 import { createHotel, type Hotel } from './hotel/hotel';
 import { hotelRoutes } from './hotel/routes';
+import { sameOriginWrites, securityHeaders } from './security';
 
 export interface AppOptions {
   repository: RecordRepository;
@@ -24,12 +25,14 @@ export interface AppOptions {
 
 export function createApp({ repository, users, clientDir, hotel = createHotel({ clock: createClock() }), enableTestRoutes = false }: AppOptions) {
   const app = express()
+    .disable('x-powered-by')
+    .use(securityHeaders)
     .use(express.json())
     .use('/api', authRoutes(users))
     .use('/api/records', recordRoutes(repository))
     .use('/api/report', reportRoutes(repository))
     .use('/api/ui-version', uiVersionRoutes(createUiVersionState()))
-    .use('/api/hotel', hotelRoutes(hotel));
+    .use('/api/hotel', sameOriginWrites, hotelRoutes(hotel));
   if (enableTestRoutes) app.use('/api/test', testSupportRoutes(repository, hotel));
   return app.use(spaRoutes(clientDir));
 }
