@@ -36,5 +36,8 @@ export default defineConfig<E2eOptions>({
     // v2 / v3 changed the markup: the same page objects must self-heal using the v1 baselines.
     { name: 'v2-healed', testDir: './e2e/specs', use: { uiVersion: 2 }, dependencies: ['v1-baseline'] },
     { name: 'v3-healed', testDir: './e2e/specs', use: { uiVersion: 3 }, dependencies: ['v1-baseline'] },
+
+    // The pet hotel staff app: admin, front desk and general staff journeys in a real browser.
+    { name: 'hotel', testDir: './e2e/hotel' },
   ],
 });
