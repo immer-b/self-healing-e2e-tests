@@ -58,7 +58,6 @@ const ROLE_FAMILIES = [
 ];
 
 const familyMatch = (families: string[][], a: string, b: string) => {
-  if (!a && !b) return 1;
   if (a === b) return 1;
   return families.some((f) => f.includes(a) && f.includes(b)) ? 0.5 : 0;
 };
@@ -75,7 +74,7 @@ function contextSimilarity(a: ElementFingerprint['context'], b: ElementFingerpri
     [a.ancestorLabels.join(' '), b.ancestorLabels.join(' ')],
     [a.parentText, b.parentText],
   ];
-  const present = pairs.filter(([x, y]) => x || y);
+  const present = pairs.filter(([x]) => x);
   if (!present.length) return undefined;
   // The baseline's label may now live in a different context slot, so also compare across slots.
   const aAll = pairs.map(([x]) => x).filter(Boolean);
@@ -92,25 +91,24 @@ export function scoreFingerprint(
   { dynamicText = false, weights: overrides }: ScoreOptions = {},
 ): ScoreResult {
   const weights = { ...DEFAULT_WEIGHTS, ...overrides };
-  if (dynamicText) weights.text *= DYNAMIC_TEXT_FACTOR;
+  if (dynamicText) {
+    // Text is unreliable, so the surrounding context (labels, captions) has to identify the element.
+    weights.context += weights.text * (1 - DYNAMIC_TEXT_FACTOR);
+    weights.text *= DYNAMIC_TEXT_FACTOR;
+  }
 
-  const typeA = baseline.attributes.type ?? '';
-  const typeB = candidate.attributes.type ?? '';
+  // Only features the baseline actually has are scored: a candidate is not penalised for carrying
+  // extra information (e.g. classes) that the baseline element never had.
+  const baselineTokens = attributeTokens(baseline);
+  const typeA = baseline.attributes.type;
 
   const features: Partial<Record<keyof FeatureWeights, number | undefined>> = {
     tag: familyMatch(TAG_FAMILIES, baseline.tag, candidate.tag),
-    role: familyMatch(ROLE_FAMILIES, baseline.role, candidate.role),
-    type: typeA || typeB ? Number(typeA === typeB) : undefined,
-    accessibleName:
-      baseline.accessibleName || candidate.accessibleName
-        ? textSimilarity(baseline.accessibleName, candidate.accessibleName)
-        : undefined,
-    text: baseline.text || candidate.text ? textSimilarity(baseline.text, candidate.text) : undefined,
-    attributes: (() => {
-      const a = attributeTokens(baseline);
-      const b = attributeTokens(candidate);
-      return a.length || b.length ? setSimilarity(a, b) : undefined;
-    })(),
+    role: baseline.role ? familyMatch(ROLE_FAMILIES, baseline.role, candidate.role) : undefined,
+    type: typeA ? Number(typeA === candidate.attributes.type) : undefined,
+    accessibleName: baseline.accessibleName ? textSimilarity(baseline.accessibleName, candidate.accessibleName) : undefined,
+    text: baseline.text ? textSimilarity(baseline.text, candidate.text) : undefined,
+    attributes: baselineTokens.length ? setSimilarity(baselineTokens, attributeTokens(candidate)) : undefined,
     context: contextSimilarity(baseline.context, candidate.context),
     path: sequenceSimilarity(baseline.path, candidate.path),
     structure: (ratio(baseline.childCount, candidate.childCount) + ratio(baseline.textLength, candidate.textLength)) / 2,
@@ -140,6 +138,26 @@ export function rankCandidates<T extends { fingerprint: ElementFingerprint }>(
     .sort((a, b) => b.score - a.score);
 }
 
-export function pickBest<T extends { score: number }>(ranked: readonly T[], threshold: number): T | undefined {
-  return ranked[0] && ranked[0].score >= threshold ? ranked[0] : undefined;
+export interface PickOptions {
+  /** A candidate at or above this score is always accepted. */
+  threshold: number;
+  /** Lower bound for accepting a candidate that clearly dominates the runner-up. */
+  minScore?: number;
+  /** Required lead over the best candidate from a different group. */
+  minMargin?: number;
+  /** Maps a candidate selector to a group; same-group runners-up (e.g. sibling rows) are not competitors. */
+  groupOf?: (selector: string) => string;
+}
+
+export function pickBest<T extends { score: number; selector?: string }>(
+  ranked: readonly T[],
+  { threshold, minScore = threshold, minMargin = 0, groupOf }: PickOptions,
+): T | undefined {
+  const [best] = ranked;
+  if (!best) return undefined;
+  if (best.score >= threshold) return best;
+  if (best.score < minScore) return undefined;
+  const bestGroup = groupOf?.(best.selector ?? '');
+  const runnerUp = ranked.slice(1).find((c) => !groupOf || groupOf(c.selector ?? '') !== bestGroup);
+  return !runnerUp || best.score - runnerUp.score >= minMargin ? best : undefined;
 }
