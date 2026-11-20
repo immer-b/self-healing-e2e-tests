@@ -49,7 +49,7 @@ let store: ElementStore;
 let events: HealEvent[];
 
 const healerFor = (page: Page, options: Partial<HealerOptions> = {}) =>
-  createHealer({ store, primaryTimeout: 300, healTimeout: 1500, onHeal: (e) => events.push(e), ...options }).forPage(page, 'login');
+  createHealer({ store, primaryTimeout: 300, healTimeout: 1500, onHeal: (e) => events.push(e), ...options }).forPage(page, 'fixture');
 
 test.beforeEach(() => {
   store = createMemoryStore();
@@ -62,7 +62,7 @@ test.describe('baseline capture', () => {
     const username = await healerFor(page).locate({ key: 'username', selector: '#username' });
     await username.fill('admin');
 
-    const record = await store.get('login', 'username');
+    const record = await store.get('fixture', 'username');
     expect(record?.selector).toBe('#username');
     expect(record?.fingerprint).toMatchObject({ tag: 'input', role: 'textbox', id: 'username', accessibleName: 'Username' });
     expect(record?.fingerprint.attributes.type).toBe('text');
@@ -89,7 +89,7 @@ test.describe('healing', () => {
     await expect(page.locator('.input-pass')).toHaveValue('secret');
     await expect(submit).toHaveText('Sign in');
     expect(events.map((e) => e.elementKey)).toEqual(['username', 'password', 'submit']);
-    expect(events[0]).toMatchObject({ pageId: 'login', originalSelector: '#username' });
+    expect(events[0]).toMatchObject({ pageId: 'fixture', originalSelector: '#username' });
     expect(events[0].score).toBeGreaterThan(0.5);
   });
 
@@ -98,10 +98,10 @@ test.describe('healing', () => {
     await healerFor(page).locate({ key: 'password', selector: '#password' });
     await page.setContent(LOGIN_V2);
     await healerFor(page).locate({ key: 'password', selector: '#password' });
-    expect((await store.get('login', 'password'))?.fingerprint.id).toBe('password');
+    expect((await store.get('fixture', 'password'))?.fingerprint.id).toBe('password');
 
     await healerFor(page, { updateBaselineOnHeal: true }).locate({ key: 'password', selector: '#password' });
-    expect((await store.get('login', 'password'))?.fingerprint.classes).toEqual(['input-pass']);
+    expect((await store.get('fixture', 'password'))?.fingerprint.classes).toEqual(['input-pass']);
   });
 
   test('reuses a healed selector for the same page and reports it as a cache hit', async ({ page }) => {
@@ -127,7 +127,7 @@ test.describe('healing', () => {
   test('fails with a helpful message when there is no baseline', async ({ page }) => {
     await page.setContent(LOGIN_V2);
     await expect(healerFor(page).locate({ key: 'username', selector: '#username' })).rejects.toThrow(
-      /login\.username.*#username.*no baseline/i,
+      /fixture\.username.*#username.*no baseline/i,
     );
   });
 
