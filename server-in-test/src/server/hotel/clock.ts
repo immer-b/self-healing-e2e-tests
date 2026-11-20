@@ -22,16 +22,44 @@ export function addDays(iso: IsoDate, days: number): IsoDate {
   return toIsoDate(date);
 }
 
+/** Calendar parts of `date` in `timeZone` (an IANA name), or in local time when no zone is given. */
+function partsIn(date: Date, timeZone?: string) {
+  if (!timeZone) return { y: date.getFullYear(), m: date.getMonth() + 1, d: date.getDate(), h: date.getHours(), min: date.getMinutes() };
+  const parts = Object.fromEntries(
+    new Intl.DateTimeFormat('en-US', { timeZone, year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', hourCycle: 'h23' })
+      .formatToParts(date)
+      .map((p) => [p.type, Number(p.value)]),
+  );
+  return { y: parts.year, m: parts.month, d: parts.day, h: parts.hour, min: parts.minute };
+}
+
 /**
  * The server's notion of "now". Injected everywhere that needs time so tests (and the e2e
- * test-support endpoint) can pin it.
+ * test-support endpoint) can pin it. `timeZone` is the hotel's IANA zone; without one the
+ * machine's local time is used (what the unit tests rely on).
  */
-export function createClock(fixed?: Date) {
+export function createClock(fixed?: Date, timeZone?: string) {
+  if (timeZone) {
+    try {
+      new Intl.DateTimeFormat('en-US', { timeZone });
+    } catch {
+      throw new Error(`Unknown time zone: ${timeZone}`);
+    }
+  }
   let pinned = fixed ? new Date(fixed) : undefined;
   const now = () => (pinned ? new Date(pinned) : new Date());
   return {
     now,
-    today: () => toIsoDate(now()),
+    timeZone,
+    today: (): IsoDate => {
+      const { y, m, d } = partsIn(now(), timeZone);
+      return `${y}-${pad(m)}-${pad(d)}`;
+    },
+    /** Minutes since midnight in the hotel's time zone. */
+    minutesIntoDay: () => {
+      const { h, min } = partsIn(now(), timeZone);
+      return h * 60 + min;
+    },
     set: (date: Date | undefined) => {
       pinned = date ? new Date(date) : undefined;
     },
