@@ -37,8 +37,20 @@ const show = (value: unknown) => {
   return String(value);
 };
 
-function Changes({ changes }: { changes: FieldChange[] }) {
+function Changes({ changes, collapsed }: { changes: FieldChange[]; collapsed: boolean }) {
   if (!changes.length) return <span className="muted">—</span>;
+  if (collapsed) {
+    return (
+      <details className="changes-details">
+        <summary>{changes.length} fields set</summary>
+        <ChangeList changes={changes} />
+      </details>
+    );
+  }
+  return <ChangeList changes={changes} />;
+}
+
+function ChangeList({ changes }: { changes: FieldChange[] }) {
   return (
     <ul className="changes">
       {changes.map((c) => (
@@ -130,7 +142,7 @@ export function AuditPage(_props: { params: Record<string, string> }) {
                         </button>
                       </td>
                       <td>
-                        <Changes changes={entry.changes} />
+                        <Changes changes={entry.changes} collapsed={entry.action === 'create' && entry.changes.length > 2} />
                       </td>
                     </tr>
                   );

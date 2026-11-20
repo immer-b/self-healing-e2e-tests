@@ -48,6 +48,8 @@ export const addDays = (iso: string, days: number) => {
 export const nights = (checkIn: string, checkOut: string) =>
   Math.round((parseDate(checkOut).getTime() - parseDate(checkIn).getTime()) / 86_400_000);
 
+export const plural = (count: number, word: string) => `${count} ${word}${count === 1 ? '' : 's'}`;
+
 export const formatMoney = (amount: number) =>
   amount.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: amount % 1 ? 2 : 0 });
 

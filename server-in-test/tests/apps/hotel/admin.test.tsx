@@ -119,4 +119,11 @@ describe('admin: change log', () => {
     await waitFor(() => expect(screen.getAllByRole('row')).toHaveLength(13)); // header + 12 rooms
     expect(window.location.search).toBe('?entityType=room');
   });
+
+  it('collapses the fields of a new record behind a summary', async () => {
+    await signInAs('admin', '/audit?entityType=owner&entityId=own-1');
+    const row = await screen.findByRole('row', { name: /Dana Whitfield/ });
+    const summary = within(row).getByText('4 fields set');
+    expect(summary.closest('details')).not.toHaveAttribute('open');
+  });
 });

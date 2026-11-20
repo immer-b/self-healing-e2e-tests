@@ -8,7 +8,8 @@
     "e2e": "playwright test",
     "typecheck": "tsc --noEmit",
     "store:serve": "tsx src/store/serveStore.ts",
-    "screenshots": "tsx scripts/captureScreenshots.ts"
+    "screenshots": "tsx scripts/captureScreenshots.ts",
+    "screenshots:hotel": "tsx scripts/captureHotelScreenshots.ts"
   },
   "devDependencies": {
     "@playwright/test": "^1.65.1",

@@ -3,7 +3,7 @@ import { api, type Stay } from '../api';
 import { useEmployee } from '../auth';
 import { Icon } from '../components/Icon';
 import { Badge, Card, EmptyState, ErrorBanner, Loading, PageHeader, StatCard, useToast } from '../components/ui';
-import { ROOM_TONE, STAY_STATUS, SPECIES_LABELS, addDays, formatDate, formatLongDate, nights, useResource } from '../lib';
+import { ROOM_TONE, STAY_STATUS, SPECIES_LABELS, addDays, formatDate, formatLongDate, nights, plural, useResource } from '../lib';
 import { Link } from '../router';
 
 export function DateNav({ date, onChange, today }: { date: string; onChange: (date: string) => void; today: string }) {
@@ -154,7 +154,7 @@ function StayTable({
                   </td>
                   <td className="nowrap">
                     {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)}
-                    <div className="cell-sub">{nights(stay.checkIn, stay.checkOut)} nights</div>
+                    <div className="cell-sub">{plural(nights(stay.checkIn, stay.checkOut), 'night')}</div>
                   </td>
                   <td>
                     <Badge tone={STAY_STATUS[stay.status].tone}>{STAY_STATUS[stay.status].label}</Badge>

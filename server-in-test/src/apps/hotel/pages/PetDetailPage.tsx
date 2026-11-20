@@ -3,7 +3,7 @@ import { api, type Note, type Room, type Stay } from '../api';
 import { useEmployee } from '../auth';
 import { Icon } from '../components/Icon';
 import { Avatar, Badge, Card, ConfirmDialog, EmptyState, ErrorBanner, Loading, Modal, PageHeader, SelectField, TextAreaField, TextField, useToast } from '../components/ui';
-import { ROOM_TONE, ROOM_TYPE_LABELS, SPECIES_LABELS, STAY_STATUS, addDays, fieldErrors, formatDate, formatDateTime, formatMoney, nights, useResource } from '../lib';
+import { ROOM_TONE, ROOM_TYPE_LABELS, SPECIES_LABELS, STAY_STATUS, addDays, fieldErrors, formatDate, formatDateTime, formatMoney, nights, plural, useResource } from '../lib';
 import { Link } from '../router';
 import { PetDialog } from './PetsPage';
 
@@ -180,7 +180,7 @@ function StaysCard({ stays, onCancel }: { stays: { data?: Stay[]; loading: boole
                   <td>{stay.room && <Badge tone={ROOM_TONE[stay.room.type]}>{stay.room.name}</Badge>}</td>
                   <td className="nowrap">
                     {formatDate(stay.checkIn)} → {formatDate(stay.checkOut)}
-                    <div className="cell-sub">{nights(stay.checkIn, stay.checkOut)} nights</div>
+                    <div className="cell-sub">{plural(nights(stay.checkIn, stay.checkOut), 'night')}</div>
                   </td>
                   <td>
                     <Badge tone={STAY_STATUS[stay.status].tone}>{STAY_STATUS[stay.status].label}</Badge>
@@ -337,7 +337,7 @@ function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; 
         <SelectField label="Room" value={roomId} onChange={(e) => setRoomId(e.target.value)} options={roomOptions} error={errors.roomId} hint="Only rooms free for every night of the stay are listed." />
         {total !== undefined && (
           <p className="muted">
-            {nights(checkIn, checkOut)} nights · estimated {formatMoney(total)}
+            {plural(nights(checkIn, checkOut), 'night')} · estimated {formatMoney(total)}
           </p>
         )}
       </form>
