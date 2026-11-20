@@ -4,7 +4,7 @@ import { createEntityStore, type Entity, type EntityStore } from './entityStore'
 import { conflict, fromValidation, invalid, notFound, success, type Outcome } from './outcome';
 import { hashPassword, verifyPassword } from './passwords';
 import { createPhotoStore } from './photos';
-import { assignEvenly, isOverdue, planCareTasks } from './scheduling';
+import { assignEvenly, careSlotsFor, isOverdue, planCareTasks } from './scheduling';
 import { seedHotel } from './seed';
 import { createSessionStore } from './sessions';
 import { createLoginThrottle } from './loginThrottle';
@@ -173,12 +173,14 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
       return restored ? success(restored) : notFound('Room');
     },
     /** Active rooms with no active stay overlapping [checkIn, checkOut). */
-    available: (checkIn: IsoDate, checkOut: IsoDate): Outcome<Entity<RoomInput>[]> => {
+    available: (checkIn: IsoDate, checkOut: IsoDate, excludeStayId?: string): Outcome<Entity<RoomInput>[]> => {
       if (!isIsoDate(checkIn) || !isIsoDate(checkOut) || checkOut <= checkIn) {
         return invalid({ checkOut: 'must be after check-in' });
       }
       const range = { checkIn, checkOut } as StayInput;
-      return success(store.rooms.list().filter((room) => !activeStays((s) => s.roomId === room.id && overlaps(s, range)).length));
+      return success(
+        store.rooms.list().filter((room) => !activeStays((s) => s.id !== excludeStayId && s.roomId === room.id && overlaps(s, range)).length),
+      );
     },
     /** Every active room with the stay occupying it on `date` (the night of `date`). */
     occupancy: (date: IsoDate) =>
@@ -310,6 +312,45 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
         return invalid({ petId: 'already has a stay for those dates' }, 409);
       }
       return success(store.stays.create({ ...stay, status: 'booked' }, actor));
+    },
+    /**
+     * Extend, shorten or move a stay. Upcoming stays can change any date; a pet already checked in
+     * can only change its check-out date and room. Open rounds follow the room and are dropped when
+     * they fall outside the new dates (Generate adds any rounds a longer stay now needs).
+     */
+    change: (id: string, patch: Partial<Pick<StayInput, 'checkIn' | 'checkOut' | 'roomId'>>, actor: Actor): Outcome<Entity<StayRecord>> => {
+      const stay = store.stays.get(id);
+      if (!stay) return notFound('Stay');
+      if (!ACTIVE_STAY.includes(stay.status)) return conflict('Only upcoming or current stays can be changed');
+      const next: StayInput = {
+        petId: stay.petId,
+        roomId: patch?.roomId ?? stay.roomId,
+        checkIn: patch?.checkIn ?? stay.checkIn,
+        checkOut: patch?.checkOut ?? stay.checkOut,
+      };
+      if (stay.status === 'checked_in' && next.checkIn !== stay.checkIn) {
+        return conflict('The pet is already checked in; only the check-out date and room can change');
+      }
+      const result = validateStay(next);
+      if (!result.ok) return invalid(result.errors);
+      const today = clock.today();
+      if (next.checkIn !== stay.checkIn && next.checkIn < today) return invalid({ checkIn: 'cannot be in the past' });
+      if (next.checkOut !== stay.checkOut && next.checkOut < today) return invalid({ checkOut: 'cannot be in the past' });
+      if (!isActive(store.rooms.get(next.roomId))) return invalid({ roomId: 'does not match a room' });
+      if (activeStays((s) => s.id !== id && s.roomId === next.roomId && overlaps(s, next)).length) {
+        return invalid({ roomId: 'is already booked for those dates' }, 409);
+      }
+      if (activeStays((s) => s.id !== id && s.petId === next.petId && overlaps(s, next)).length) {
+        return invalid({ petId: 'already has a stay for those dates' }, 409);
+      }
+      const updated = store.stays.update(id, { roomId: next.roomId, checkIn: next.checkIn, checkOut: next.checkOut }, actor, 'change')!;
+      store.tasks
+        .list({ where: (t) => t.stayId === id && t.status === 'pending' && t.date >= today })
+        .forEach((t) => {
+          if (!careSlotsFor(next, t.date).includes(t.slot)) store.tasks.remove(t.id, actor);
+          else if (t.roomId !== next.roomId) store.tasks.update(t.id, { roomId: next.roomId }, actor, 'room_change');
+        });
+      return success(updated);
     },
     checkIn: (id: string, actor: Actor): Outcome<Entity<StayRecord>> => {
       const stay = store.stays.get(id);

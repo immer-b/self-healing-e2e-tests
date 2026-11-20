@@ -31,6 +31,9 @@ const ACTIONS: Record<string, { label: string; tone: Tone }> = {
   unassign: { label: 'Unassigned', tone: 'warning' },
   photo: { label: 'Photo added', tone: 'info' },
   complete: { label: 'Completed', tone: 'success' },
+  change: { label: 'Changed', tone: 'info' },
+  room_change: { label: 'Room changed', tone: 'info' },
+  password_change: { label: 'Password changed', tone: 'accent' },
 };
 
 const show = (value: unknown) => {

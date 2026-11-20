@@ -111,7 +111,8 @@ export const api = {
   },
 
   rooms: (params: { includeDeleted?: boolean } = {}) => request<Room[]>(`/rooms${query(params)}`),
-  availableRooms: (checkIn: string, checkOut: string) => request<Room[]>(`/rooms/available${query({ checkIn, checkOut })}`),
+  availableRooms: (checkIn: string, checkOut: string, excludeStayId?: string) =>
+    request<Room[]>(`/rooms/available${query({ checkIn, checkOut, excludeStayId })}`),
   occupancy: (date: string) => request<RoomOccupancy[]>(`/rooms/occupancy${query({ date })}`),
   createRoom: (input: RoomInput) => request<Room>('/rooms', send('POST', input)),
   updateRoom: (id: string, patch: Partial<RoomInput>) => request<Room>(`/rooms/${id}`, send('PUT', patch)),
@@ -145,6 +146,7 @@ export const api = {
   arrivals: (date: string) => request<Stay[]>(`/stays/arrivals${query({ date })}`),
   departures: (date: string) => request<Stay[]>(`/stays/departures${query({ date })}`),
   bookStay: (input: StayInput) => request<Stay>('/stays', send('POST', input)),
+  changeStay: (id: string, patch: Partial<StayInput>) => request<Stay>(`/stays/${id}`, send('PUT', patch)),
   checkIn: (id: string) => request<Stay>(`/stays/${id}/check-in`, send('POST')),
   checkOut: (id: string) => request<Stay>(`/stays/${id}/check-out`, send('POST')),
   cancelStay: (id: string) => request<Stay>(`/stays/${id}/cancel`, send('POST')),

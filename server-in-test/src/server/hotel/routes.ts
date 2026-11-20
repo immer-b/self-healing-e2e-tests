@@ -190,7 +190,7 @@ export function hotelRoutes(hotel: Hotel) {
     );
   });
   router.get('/rooms/available', DESK, (req, res) => {
-    send(res, hotel.rooms.available(String(req.query.checkIn ?? ''), String(req.query.checkOut ?? '')));
+    send(res, hotel.rooms.available(String(req.query.checkIn ?? ''), String(req.query.checkOut ?? ''), str(req.query.excludeStayId)));
   });
   router.post('/rooms', ADMIN, h((req, res) => send(res, hotel.rooms.create(req.body, actorOf(req)), 201)));
   router.put('/rooms/:id', ADMIN, h((req, res) => send(res, hotel.rooms.update(String(req.params.id), req.body, actorOf(req)))));
@@ -255,6 +255,10 @@ export function hotelRoutes(hotel: Hotel) {
   router.get('/stays/arrivals', DESK, (req, res) => res.json(hotel.stays.arrivals(dateParam(req.query.date)).map(stayView)));
   router.get('/stays/departures', DESK, (req, res) => res.json(hotel.stays.departures(dateParam(req.query.date)).map(stayView)));
   router.post('/stays', DESK, h((req, res) => send(res, hotel.stays.book(req.body, actorOf(req)), 201, stayView)));
+  router.put('/stays/:id', DESK, h((req, res) => {
+    const { checkIn, checkOut, roomId } = req.body ?? {};
+    send(res, hotel.stays.change(String(req.params.id), { checkIn, checkOut, roomId }, actorOf(req)), 200, stayView);
+  }));
   router.post('/stays/:id/check-in', DESK, h((req, res) => send(res, hotel.stays.checkIn(String(req.params.id), actorOf(req)), 200, stayView)));
   router.post('/stays/:id/check-out', DESK, h((req, res) => send(res, hotel.stays.checkOut(String(req.params.id), actorOf(req)), 200, stayView)));
   router.post('/stays/:id/cancel', DESK, h((req, res) => send(res, hotel.stays.cancel(String(req.params.id), actorOf(req)), 200, stayView)));

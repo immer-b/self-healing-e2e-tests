@@ -18,6 +18,7 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
   const [editing, setEditing] = useState(false);
   const [booking, setBooking] = useState(false);
   const [cancelling, setCancelling] = useState<Stay>();
+  const [changing, setChanging] = useState<Stay>();
 
   if (pet.error) return <ErrorBanner>{pet.error}</ErrorBanner>;
   if (!pet.data) return <Loading />;
@@ -67,7 +68,7 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
               <div>{p.specialInstructions || 'None on file.'}</div>
             </div>
           </div>
-          <StaysCard stays={stays} onCancel={setCancelling} />
+          <StaysCard stays={stays} onCancel={setCancelling} onChange={setChanging} />
           <NotesCard petId={p.id} petName={p.name} />
         </div>
         <div className="stack">
@@ -138,6 +139,19 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
           }}
         />
       )}
+      {changing && (
+        <BookStayDialog
+          petId={p.id}
+          petName={p.name}
+          stay={changing}
+          onClose={() => setChanging(undefined)}
+          onBooked={() => {
+            setChanging(undefined);
+            toast(`${p.name}'s stay was changed`);
+            stays.reload();
+          }}
+        />
+      )}
       {cancelling && (
         <ConfirmDialog
           title="Cancel booking?"
@@ -156,7 +170,15 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
   );
 }
 
-function StaysCard({ stays, onCancel }: { stays: { data?: Stay[]; loading: boolean; error?: string }; onCancel: (stay: Stay) => void }) {
+function StaysCard({
+  stays,
+  onCancel,
+  onChange,
+}: {
+  stays: { data?: Stay[]; loading: boolean; error?: string };
+  onCancel: (stay: Stay) => void;
+  onChange: (stay: Stay) => void;
+}) {
   return (
     <Card title="Stays">
       {stays.error && <ErrorBanner>{stays.error}</ErrorBanner>}
@@ -187,6 +209,11 @@ function StaysCard({ stays, onCancel }: { stays: { data?: Stay[]; loading: boole
                     <Badge tone={STAY_STATUS[stay.status].tone}>{STAY_STATUS[stay.status].label}</Badge>
                   </td>
                   <td className="cell-actions">
+                    {(stay.status === 'booked' || stay.status === 'checked_in') && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => onChange(stay)}>
+                        Change
+                      </button>
+                    )}
                     {stay.status === 'booked' && (
                       <button type="button" className="btn btn-ghost btn-sm" onClick={() => onCancel(stay)}>
                         Cancel booking
@@ -344,11 +371,25 @@ function NoteItem({ note, addenda, onAddendum }: { note: Note; addenda: Note[]; 
   );
 }
 
-function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; petName: string; onClose: () => void; onBooked: (stay: Stay) => void }) {
+/** Books a new stay, or changes `stay` (dates and room) when given. */
+function BookStayDialog({
+  petId,
+  petName,
+  stay,
+  onClose,
+  onBooked,
+}: {
+  petId: string;
+  petName: string;
+  stay?: Stay;
+  onClose: () => void;
+  onBooked: (stay: Stay) => void;
+}) {
   const { today } = useEmployee();
-  const [checkIn, setCheckIn] = useState(today);
-  const [checkOut, setCheckOut] = useState(addDays(today, 1));
-  const [roomId, setRoomId] = useState('');
+  const [checkIn, setCheckIn] = useState(stay?.checkIn ?? today);
+  const [checkOut, setCheckOut] = useState(stay?.checkOut ?? addDays(today, 1));
+  const [roomId, setRoomId] = useState(stay?.roomId ?? '');
+  const checkedIn = stay?.status === 'checked_in';
   const [rooms, setRooms] = useState<Room[]>();
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [general, setGeneral] = useState<string>();
@@ -358,7 +399,7 @@ function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; 
     if (!datesValid) return;
     let active = true;
     setRooms(undefined);
-    api.availableRooms(checkIn, checkOut).then(
+    api.availableRooms(checkIn, checkOut, stay?.id).then(
       (list) => {
         if (!active) return;
         setRooms(list);
@@ -369,12 +410,12 @@ function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; 
     return () => {
       active = false;
     };
-  }, [checkIn, checkOut, datesValid]);
+  }, [checkIn, checkOut, datesValid, stay?.id]);
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     try {
-      onBooked(await api.bookStay({ petId, roomId, checkIn, checkOut }));
+      onBooked(stay ? await api.changeStay(stay.id, { roomId, checkIn, checkOut }) : await api.bookStay({ petId, roomId, checkIn, checkOut }));
     } catch (e) {
       const { general: message, fields } = fieldErrors(e);
       setErrors(fields);
@@ -390,7 +431,7 @@ function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; 
 
   return (
     <Modal
-      title={`Book a stay for ${petName}`}
+      title={stay ? `Change ${petName}'s stay` : `Book a stay for ${petName}`}
       onClose={onClose}
       footer={
         <>
@@ -398,7 +439,7 @@ function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; 
             Cancel
           </button>
           <button type="submit" form="stay-form" className="btn btn-primary" disabled={!roomId || !datesValid}>
-            Book stay
+            {stay ? 'Save changes' : 'Book stay'}
           </button>
         </>
       }
@@ -406,7 +447,7 @@ function BookStayDialog({ petId, petName, onClose, onBooked }: { petId: string; 
       <form id="stay-form" className="form" onSubmit={submit} noValidate>
         {general && <ErrorBanner>{general}</ErrorBanner>}
         <div className="form-row">
-          <TextField label="Check-in" type="date" min={today} value={checkIn} onChange={(e) => setCheckIn(e.target.value)} error={errors.checkIn} />
+          <TextField label="Check-in" type="date" min={checkedIn ? undefined : today} disabled={checkedIn} hint={checkedIn ? 'Already checked in' : undefined} value={checkIn} onChange={(e) => setCheckIn(e.target.value)} error={errors.checkIn} />
           <TextField label="Check-out" type="date" min={checkIn} value={checkOut} onChange={(e) => setCheckOut(e.target.value)} error={errors.checkOut ?? (checkIn && checkOut && !datesValid ? 'Check-out must be after check-in' : undefined)} />
         </div>
         <SelectField label="Room" value={roomId} onChange={(e) => setRoomId(e.target.value)} options={roomOptions} error={errors.roomId} hint="Only rooms free for every night of the stay are listed." />
