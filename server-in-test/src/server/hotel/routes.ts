@@ -61,6 +61,7 @@ export function hotelRoutes(hotel: Hotel) {
       return;
     }
     (req as AuthedRequest).employee = employee;
+    res.locals.employeeId = employee.id;
     next();
   };
 

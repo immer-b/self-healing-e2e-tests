@@ -11,6 +11,7 @@ import { createClock } from './hotel/clock';
 import { createHotel, type Hotel } from './hotel/hotel';
 import { hotelRoutes } from './hotel/routes';
 import { sameOriginWrites, securityHeaders } from './security';
+import { healthRoutes, requestLogger, silentLog, type Log } from './observability';
 
 export interface AppOptions {
   repository: RecordRepository;
@@ -21,12 +22,16 @@ export interface AppOptions {
   hotel?: Hotel;
   /** Mount /api/test/* (reset, clock). Off unless asked for: never enable in production. */
   enableTestRoutes?: boolean;
+  /** Where request logs go. Silent by default; the server entry point logs JSON to stdout. */
+  log?: Log;
 }
 
-export function createApp({ repository, users, clientDir, hotel = createHotel({ clock: createClock() }), enableTestRoutes = false }: AppOptions) {
+export function createApp({ repository, users, clientDir, hotel = createHotel({ clock: createClock() }), enableTestRoutes = false, log = silentLog }: AppOptions) {
   const app = express()
     .disable('x-powered-by')
+    .use(requestLogger(log))
     .use(securityHeaders)
+    .use(healthRoutes(() => hotel.rooms.list()))
     .use(express.json())
     .use('/api', authRoutes(users))
     .use('/api/records', recordRoutes(repository))
