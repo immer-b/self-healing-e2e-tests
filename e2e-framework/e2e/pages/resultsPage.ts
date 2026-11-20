@@ -1,5 +1,6 @@
 import type { Locator, Page } from '@playwright/test';
 import type { Healer } from '../../src';
+import { click, fill, numbersIn, select, textOf } from './actions';
 
 export interface RecordValues {
   name: string;
@@ -10,8 +11,6 @@ export interface RecordValues {
 
 type RowAction = 'view' | 'edit' | 'delete';
 const ROW_ACTION_LABELS: Record<RowAction, string> = { view: 'View', edit: 'Edit', delete: 'Delete' };
-
-const firstNumber = (text: string) => Number(/\d[\d,]*/.exec(text)?.[0].replace(/,/g, '') ?? NaN);
 
 /**
  * Results (query) page object: filtering plus CRUD through each row's "⋯" actions.
@@ -44,31 +43,33 @@ export function createResultsPage(page: Page, healer: Healer) {
   const row = async (name: string) => (await elements.rows()).filter({ hasText: name });
 
   const chooseRowAction = async (name: string, action: RowAction) => {
-    await (await elements.rowActions(await row(name))).click();
-    await (await elements.rowAction(action)).click();
+    const target = await row(name);
+    await click(() => elements.rowActions(target));
+    await click(() => elements.rowAction(action));
   };
 
   const fillForm = async (values: Partial<RecordValues>) => {
-    if (values.name !== undefined) await (await elements.form.name()).fill(values.name);
-    if (values.owner !== undefined) await (await elements.form.owner()).fill(values.owner);
-    if (values.status !== undefined) await (await elements.form.status()).selectOption(values.status);
-    if (values.amount !== undefined) await (await elements.form.amount()).fill(String(values.amount));
-    await (await elements.form.save()).click();
+    const { form } = elements;
+    if (values.name !== undefined) await fill(form.name, values.name);
+    if (values.owner !== undefined) await fill(form.owner, values.owner);
+    if (values.status !== undefined) await select(form.status, values.status);
+    if (values.amount !== undefined) await fill(form.amount, String(values.amount));
+    await click(form.save);
   };
 
   return {
     goto: () => page.goto('/query/'),
 
-    search: async (text: string) => (await elements.search()).fill(text),
-    filterByStatus: async (status: RecordValues['status'] | '') => (await elements.statusFilter()).selectOption(status),
-    resultCount: async () => firstNumber(await (await elements.resultCount()).innerText()),
+    search: (text: string) => fill(elements.search, text),
+    filterByStatus: (status: RecordValues['status'] | '') => select(elements.statusFilter, status),
+    resultCount: async () => numbersIn(await textOf(elements.resultCount))[0],
 
     rows: elements.rows,
     row,
     rowTexts: async () => (await elements.rows()).allInnerTexts(),
 
     createRecord: async (values: RecordValues) => {
-      await (await elements.addButton()).click();
+      await click(elements.addButton);
       await fillForm(values);
     },
     viewDetails: async (name: string) => {
@@ -81,7 +82,7 @@ export function createResultsPage(page: Page, healer: Healer) {
     },
     deleteRecord: async (name: string) => {
       await chooseRowAction(name, 'delete');
-      await (await elements.confirmDelete()).click();
+      await click(elements.confirmDelete);
     },
   };
 }

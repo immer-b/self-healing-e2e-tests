@@ -1,5 +1,5 @@
 import type { UiVersion } from '../shared/uiVersion';
-import { VersionedLayout, type LayoutRegistry } from '../shared/versioning';
+import type { LayoutRegistry } from '../shared/versioning';
 import { useLogin } from './useLogin';
 import { ClassicLogin } from './layouts/ClassicLogin';
 import { CardLogin } from './layouts/CardLogin';
@@ -10,8 +10,6 @@ const LAYOUTS: LayoutRegistry<LoginLayoutProps> = { 1: ClassicLogin, 2: CardLogi
 
 export function LoginApp({ version }: { version: UiVersion }) {
   const { state, submit } = useLogin();
-  return (
-    <VersionedLayout layouts={LAYOUTS} version={version}
-      props={{ state, onSubmit: submit, resultsHref: '/query/' }} />
-  );
+  const Layout = LAYOUTS[version];
+  return <Layout state={state} onSubmit={submit} resultsHref="/query/" />;
 }

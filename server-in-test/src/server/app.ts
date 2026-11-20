@@ -3,7 +3,8 @@ import type { UserAccount } from './auth';
 import type { RecordRepository } from './recordRepository';
 import { authRoutes } from './routes/authRoutes';
 import { recordRoutes } from './routes/recordRoutes';
-import { reportRoutes, testSupportRoutes } from './routes/reportRoutes';
+import { reportRoutes } from './routes/reportRoutes';
+import { testSupportRoutes } from './routes/testSupportRoutes';
 import { spaRoutes } from './routes/spaRoutes';
 import { createUiVersionState, uiVersionRoutes } from './routes/uiVersionRoutes';
 

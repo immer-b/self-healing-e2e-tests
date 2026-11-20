@@ -3,7 +3,7 @@ import type { Report } from '../../server/report';
 
 export type { DataRecord, RecordFilter, RecordInput, Report };
 
-export interface ApiError extends Error {
+interface ApiError extends Error {
   status: number;
   body: unknown;
 }

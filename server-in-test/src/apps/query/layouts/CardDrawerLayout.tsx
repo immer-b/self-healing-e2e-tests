@@ -13,6 +13,10 @@ type Drawer =
 export function CardDrawerLayout({ records, filter, updateFilter, save, remove }: QueryLayoutProps) {
   const [drawer, setDrawer] = useState<Drawer | null>(null);
   const close = () => setDrawer(null);
+  const createAndClose = async (input: RecordInput) => {
+    await save(input);
+    close();
+  };
 
   return (
     <div className="cards-page" data-ui-version="3">
@@ -54,7 +58,7 @@ export function CardDrawerLayout({ records, filter, updateFilter, save, remove }
         <aside className="drawer" role="dialog" aria-label={drawer.mode === 'create' ? 'New record' : 'Record details'}>
           <button className="drawer-close" type="button" aria-label="Close drawer" onClick={close}>×</button>
           {drawer.mode === 'create' ? (
-            <DrawerForm onCancel={close} onSave={async (input) => { await save(input); close(); }} />
+            <DrawerForm onCancel={close} onSave={createAndClose} />
           ) : (
             <RecordDrawerBody drawer={drawer} setDrawer={setDrawer} close={close} save={save} remove={remove} />
           )}
@@ -74,6 +78,14 @@ interface RecordDrawerBodyProps {
 
 function RecordDrawerBody({ drawer, setDrawer, close, save, remove }: RecordDrawerBodyProps) {
   const { record, mode } = drawer;
+  const saveAndClose = async (input: RecordInput) => {
+    await save(input, record.id);
+    close();
+  };
+  const removeAndClose = async () => {
+    await remove(record.id);
+    close();
+  };
   const tab = (target: Drawer['mode']) => `drawer-tab${mode === target ? ' active' : ''}`;
   return (
     <>
@@ -94,12 +106,12 @@ function RecordDrawerBody({ drawer, setDrawer, close, save, remove }: RecordDraw
       )}
       {mode === 'edit' && (
         <DrawerForm record={record} onCancel={() => setDrawer({ mode: 'details', record })}
-          onSave={async (input) => { await save(input, record.id); close(); }} />
+          onSave={saveAndClose} />
       )}
       {mode === 'confirmDelete' && (
         <div className="drawer-confirm">
           <p>This will permanently remove {record.name}.</p>
-          <button type="button" className="danger" onClick={async () => { await remove(record.id); close(); }}>Confirm delete</button>
+          <button type="button" className="danger" onClick={removeAndClose}>Confirm delete</button>
           <button type="button" onClick={() => setDrawer({ mode: 'details', record })}>Keep record</button>
         </div>
       )}

@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 import { join } from 'node:path';
 
-export const SPA_NAMES = ['login', 'query', 'report'] as const;
+const SPA_NAMES = ['login', 'query', 'report'] as const;
 
 /**
  * Serves each built single page app under /<name>/ with a fallback to its index.html for deep links,

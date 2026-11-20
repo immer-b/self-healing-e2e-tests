@@ -31,4 +31,3 @@ export function createBaselines(store: ElementStore) {
   };
 }
 
-export type Baselines = ReturnType<typeof createBaselines>;

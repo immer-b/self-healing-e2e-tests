@@ -85,7 +85,7 @@ Every app keeps one data hook and swaps only the *layout* component. Each versio
 ```mermaid
 flowchart LR
   main["main.tsx<br/>mountApp(App)"] --> Root["VersionedRoot<br/>useUiVersion()"] --> App["XxxApp<br/>data hook"]
-  App --> VL["VersionedLayout<br/>LAYOUTS[version]"]
+  App --> VL["LAYOUTS[version]"]
   VL --> V1["v1 layout"]
   VL --> V2["v2 layout"]
   VL --> V3["v3 layout"]
@@ -99,7 +99,7 @@ server-in-test/
 │  ├─ server/                 # Node backend (Express 5)
 │  │  ├─ index.ts             # entry point: wires repository + users + client dir, listens on PORT
 │  │  ├─ app.ts               # createApp(): composes the routers below
-│  │  ├─ routes/              # authRoutes, recordRoutes, reportRoutes (+ test reset), spaRoutes, uiVersionRoutes
+│  │  ├─ routes/              # authRoutes, recordRoutes, reportRoutes, testSupportRoutes, spaRoutes, uiVersionRoutes
 │  │  ├─ recordRepository.ts  # in-memory CRUD + filtering (closure-based)
 │  │  ├─ validation.ts        # record input validation (full and partial)
 │  │  ├─ auth.ts              # credential check and demo users

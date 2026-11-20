@@ -14,6 +14,15 @@ export function GridLayout({ records, filter, updateFilter, save, remove }: Quer
   const [panel, setPanel] = useState<RowPanel | null>(null);
   const [editor, setEditor] = useState<Editor | null>(null);
 
+  const saveAndCloseEditor = (id?: string) => async (input: RecordInput) => {
+    await save(input, id);
+    setEditor(null);
+  };
+  const removeAndClosePanel = (id: string) => async () => {
+    await remove(id);
+    setPanel(null);
+  };
+
   const choose = (action: () => void) => {
     setPopoverFor(null);
     action();
@@ -35,7 +44,7 @@ export function GridLayout({ records, filter, updateFilter, save, remove }: Quer
 
       {editor && (
         <EditorPanel key={editor.record?.id ?? 'new'} record={editor.record} onCancel={() => setEditor(null)}
-          onSave={async (input) => { await save(input, editor.record?.id); setEditor(null); }} />
+          onSave={saveAndCloseEditor(editor.record?.id)} />
       )}
 
       <div role="grid" className="data-grid">
@@ -74,7 +83,7 @@ export function GridLayout({ records, filter, updateFilter, save, remove }: Quer
               <div className="inline-confirm">
                 Delete {record.name}?
                 <button type="button" className="danger"
-                  onClick={async () => { await remove(record.id); setPanel(null); }}>Yes, delete</button>
+                  onClick={removeAndClosePanel(record.id)}>Yes, delete</button>
                 <button type="button" onClick={() => setPanel(null)}>No</button>
               </div>
             )}

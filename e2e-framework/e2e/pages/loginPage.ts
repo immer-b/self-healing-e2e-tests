@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { Healer } from '../../src';
+import { click, fill } from './actions';
 
 /**
  * Login page object. Selectors are written against UI v1 only; on other versions the healer
@@ -17,19 +18,19 @@ export function createLoginPage(page: Page, healer: Healer) {
     resultsLink: () => ui.locate({ key: 'resultsLink', selector: '#results-link' }),
   };
 
-  const submit = async () => (await elements.submitButton()).click();
+  const submit = () => click(elements.submitButton);
 
   return {
     goto: () => page.goto('/login/'),
     submit,
     login: async (username: string, password: string) => {
-      await (await elements.username()).fill(username);
-      await (await elements.password()).fill(password);
+      await fill(elements.username, username);
+      await fill(elements.password, password);
       await submit();
     },
     errorMessage: elements.errorMessage,
     welcomeMessage: elements.welcomeMessage,
-    openResults: async () => (await elements.resultsLink()).click(),
+    openResults: () => click(elements.resultsLink),
   };
 }
 

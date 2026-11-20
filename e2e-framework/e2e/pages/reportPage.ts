@@ -1,5 +1,6 @@
 import type { Download, Page } from '@playwright/test';
 import type { Healer } from '../../src';
+import { click, numbersIn, textOf } from './actions';
 
 export type Metric = 'totalRecords' | 'totalAmount' | 'averageAmount' | 'active' | 'inactive' | 'pending';
 
@@ -13,7 +14,6 @@ const METRIC_SELECTORS: Record<Metric, string> = {
   pending: '#metric-pending .value',
 };
 
-const numbersIn = (text: string) => (text.match(/\d[\d,]*/g) ?? []).map((n) => Number(n.replace(/,/g, '')));
 
 /**
  * Report page object. Selectors target UI v1 (metric cards + owner table); v2 (sidebar definition
@@ -34,7 +34,7 @@ export function createReportPage(page: Page, healer: Healer) {
     goto: () => page.goto('/report/'),
 
     /** Numeric value of a metric, with currency formatting stripped. */
-    metric: async (metric: Metric) => numbersIn(await (await elements.metric(metric)).innerText())[0],
+    metric: async (metric: Metric) => numbersIn(await textOf(() => elements.metric(metric)))[0],
 
     ownerCount: async () => (await elements.ownerRows()).count(),
 
@@ -45,7 +45,7 @@ export function createReportPage(page: Page, healer: Healer) {
       return { count, amount };
     },
 
-    refresh: async () => (await elements.refreshButton()).click(),
+    refresh: () => click(elements.refreshButton),
 
     exportCsv: async (): Promise<Download> => {
       const button = await elements.exportButton();

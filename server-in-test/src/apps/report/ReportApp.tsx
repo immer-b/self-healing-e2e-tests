@@ -1,5 +1,5 @@
 import type { UiVersion } from '../shared/uiVersion';
-import { VersionedLayout, type LayoutRegistry } from '../shared/versioning';
+import type { LayoutRegistry } from '../shared/versioning';
 import { useReport } from './useReport';
 import type { ReportLayoutProps } from './layouts/types';
 import { DashboardLayout } from './layouts/DashboardLayout';
@@ -11,5 +11,6 @@ const LAYOUTS: LayoutRegistry<ReportLayoutProps> = { 1: DashboardLayout, 2: Side
 export function ReportApp({ version }: { version: UiVersion }) {
   const { report, refresh, exportCsv } = useReport();
   if (!report) return <p>Loading report…</p>;
-  return <VersionedLayout layouts={LAYOUTS} version={version} props={{ report, refresh, exportCsv }} />;
+  const Layout = LAYOUTS[version];
+  return <Layout report={report} refresh={refresh} exportCsv={exportCsv} />;
 }

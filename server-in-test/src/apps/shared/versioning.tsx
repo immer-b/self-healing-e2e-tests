@@ -5,23 +5,10 @@ import { useUiVersion } from './useUiVersion';
 import { VersionNav } from './VersionNav';
 import './base.css';
 
+/** One layout component per UI version; apps render `LAYOUTS[version]`. */
 export type LayoutRegistry<P> = Record<UiVersion, ComponentType<P>>;
 
 type VersionedApp = ComponentType<{ version: UiVersion }>;
-
-/** Renders the layout registered for `version`. */
-export function VersionedLayout<P extends object>({
-  layouts,
-  version,
-  props,
-}: {
-  layouts: LayoutRegistry<P>;
-  version: UiVersion;
-  props: P;
-}) {
-  const Layout = layouts[version];
-  return <Layout {...props} />;
-}
 
 /** Renders `App` with the server's current UI version and re-renders when it changes. */
 export function VersionedRoot({ App, pollMs }: { App: VersionedApp; pollMs?: number }) {

@@ -14,6 +14,14 @@ export function TableLayout({ records, filter, updateFilter, save, remove }: Que
   const [menuFor, setMenuFor] = useState<string | null>(null);
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const close = () => setDialog(null);
+  const saveAndClose = (id?: string) => async (input: RecordInput) => {
+    await save(input, id);
+    close();
+  };
+  const removeAndClose = (id: string) => async () => {
+    await remove(id);
+    close();
+  };
   const openDialog = (next: Dialog) => {
     setMenuFor(null);
     setDialog(next);
@@ -68,14 +76,14 @@ export function TableLayout({ records, filter, updateFilter, save, remove }: Que
         <div className="modal-backdrop">
           {dialog.kind === 'view' && <DetailsModal record={dialog.record} onClose={close} />}
           {dialog.kind === 'create' && <FormModal title="New record" onCancel={close}
-            onSave={async (input) => { await save(input); close(); }} />}
+            onSave={saveAndClose()} />}
           {dialog.kind === 'edit' && <FormModal title="Edit record" record={dialog.record} onCancel={close}
-            onSave={async (input) => { await save(input, dialog.record.id); close(); }} />}
+            onSave={saveAndClose(dialog.record.id)} />}
           {dialog.kind === 'delete' && (
             <div role="dialog" aria-label="Confirm deletion" className="modal">
               <p>Delete {dialog.record.name}?</p>
               <button id="confirm-delete" type="button"
-                onClick={async () => { await remove(dialog.record.id); close(); }}>Confirm delete</button>
+                onClick={removeAndClose(dialog.record.id)}>Confirm delete</button>
               <button type="button" onClick={close}>Cancel</button>
             </div>
           )}
