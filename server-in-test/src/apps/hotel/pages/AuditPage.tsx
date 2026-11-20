@@ -4,6 +4,8 @@ import { Icon } from '../components/Icon';
 import { Badge, Card, EmptyState, ErrorBanner, Loading, PageHeader, SelectField, TextField, type Tone } from '../components/ui';
 import { formatDateTime, humanize, useResource } from '../lib';
 import { navigate, useSearchParams } from '../router';
+import { useEmployee } from '../auth';
+import { downloadCsv, toCsv } from '../csv';
 
 const ENTITY_TYPES = [
   { value: '', label: 'All entities' },
@@ -87,7 +89,35 @@ export function AuditPage(_props: { params: Record<string, string> }) {
     setNextCursor(firstPage.data.nextCursor);
   }, [firstPage.data]);
 
+  const { today } = useEmployee();
+  const [exporting, setExporting] = useState(false);
   const reload = () => firstPage.reload();
+
+  /** Exports every entry matching the filters, fetching the remaining pages first. */
+  const exportCsv = async () => {
+    setExporting(true);
+    try {
+      const all: LabeledAuditEntry[] = [];
+      let before: string | undefined;
+      do {
+        const page = await api.audit({ entityType, entityId, from, to, before });
+        all.push(...page.entries);
+        before = page.nextCursor;
+      } while (before);
+      const rows = all.map((e) => [
+        e.at,
+        e.actor.name,
+        ACTIONS[e.action]?.label ?? e.action,
+        TYPE_NAMES[e.entityType] ?? e.entityType,
+        e.entityId,
+        e.label,
+        e.changes.map((c) => `${humanize(c.field)}: ${show(c.from)} → ${show(c.to)}`).join('; '),
+      ]);
+      downloadCsv(`change-log-${today}.csv`, toCsv(['When', 'Who', 'Action', 'Record type', 'Record ID', 'Record', 'Changes'], rows));
+    } finally {
+      setExporting(false);
+    }
+  };
   const loadMore = async () => {
     setLoadingMore(true);
     try {
@@ -113,9 +143,14 @@ export function AuditPage(_props: { params: Record<string, string> }) {
         title="Change log"
         subtitle="Every change to staff, guests, rooms, stays and care rounds: who made it and when. Entries can't be edited or removed."
         actions={
-          <button type="button" className="btn btn-secondary" onClick={() => reload()}>
-            <Icon name="restore" /> Refresh
-          </button>
+          <>
+            <button type="button" className="btn btn-secondary" onClick={exportCsv} disabled={exporting || !entries?.length}>
+              <Icon name="note" /> {exporting ? 'Exporting…' : 'Export CSV'}
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={() => reload()}>
+              <Icon name="restore" /> Refresh
+            </button>
+          </>
         }
       />
       <Card>

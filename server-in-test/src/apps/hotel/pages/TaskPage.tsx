@@ -124,7 +124,7 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
               )}
             </div>
           </Card>
-          <NotesCard petId={task.petId} taskId={task.id} />
+          <NotesCard petId={task.petId} petName={task.pet?.name} taskId={task.id} />
         </div>
         <div className="stack">
           <Card title="Emergency contacts">

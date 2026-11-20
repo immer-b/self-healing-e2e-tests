@@ -6,6 +6,7 @@ import { Avatar, Badge, Card, ConfirmDialog, EmptyState, ErrorBanner, Loading, M
 import { ROOM_TONE, ROOM_TYPE_LABELS, SPECIES_LABELS, STAY_STATUS, addDays, fieldErrors, formatDate, formatDateTime, formatMoney, nights, plural, useResource } from '../lib';
 import { Link } from '../router';
 import { PetDialog } from './PetsPage';
+import { downloadCsv, slug, toCsv } from '../csv';
 
 export function PetDetailPage({ params }: { params: Record<string, string> }) {
   const { employee } = useEmployee();
@@ -67,7 +68,7 @@ export function PetDetailPage({ params }: { params: Record<string, string> }) {
             </div>
           </div>
           <StaysCard stays={stays} onCancel={setCancelling} />
-          <NotesCard petId={p.id} />
+          <NotesCard petId={p.id} petName={p.name} />
         </div>
         <div className="stack">
           <Card title="Owner">
@@ -204,7 +205,7 @@ function StaysCard({ stays, onCancel }: { stays: { data?: Stay[]; loading: boole
   );
 }
 
-export function NotesCard({ petId, taskId, title = 'Notes' }: { petId: string; taskId?: string; title?: string }) {
+export function NotesCard({ petId, petName, taskId, title = 'Notes' }: { petId: string; petName?: string; taskId?: string; title?: string }) {
   const notes = useResource(() => api.notes(petId), [petId]);
   const [text, setText] = useState('');
   const [error, setError] = useState<string>();
@@ -229,8 +230,26 @@ export function NotesCard({ petId, taskId, title = 'Notes' }: { petId: string; t
     }
   };
 
+  const exportCsv = () =>
+    downloadCsv(
+      `notes-${slug(petName ?? 'pet')}-${petId}.csv`,
+      toCsv(
+        ['Written at', 'Author', 'Note', 'Care round'],
+        (notes.data ?? []).map((n) => [n.createdAt, n.createdBy.name, n.text, n.taskId ?? '']),
+      ),
+    );
+
   return (
-    <Card title={title}>
+    <Card
+      title={title}
+      actions={
+        notes.data?.length ? (
+          <button type="button" className="btn btn-ghost btn-sm" onClick={exportCsv}>
+            Export CSV
+          </button>
+        ) : undefined
+      }
+    >
       <div className="card-body stack">
         <form className="form" onSubmit={submit}>
           <TextAreaField label="New note" placeholder="What did you notice? Behaviour, health, food, anything the next person should know." value={text} onChange={(e) => setText(e.target.value)} error={error} />
