@@ -1,5 +1,5 @@
 import { formatCurrency } from '../../shared/format';
-import type { ReportLayoutProps } from '../useReport';
+import type { ReportLayoutProps } from './types';
 import { RECORD_STATUSES } from '../../../server/types';
 
 function Kpi({ label, caption, value }: { label: string; caption: string; value: string | number }) {

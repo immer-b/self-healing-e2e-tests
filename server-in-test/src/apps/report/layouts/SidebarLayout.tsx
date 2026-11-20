@@ -1,5 +1,5 @@
 import { formatCurrency } from '../../shared/format';
-import type { ReportLayoutProps } from '../useReport';
+import type { ReportLayoutProps } from './types';
 
 /** v2: summary definition list in a sidebar, owner breakdown as a list, toolbar at the bottom. */
 export function SidebarLayout({ report, refresh, exportCsv }: ReportLayoutProps) {

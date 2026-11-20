@@ -1,5 +1,5 @@
 import { formatCurrency } from '../../shared/format';
-import type { ReportLayoutProps } from '../useReport';
+import type { ReportLayoutProps } from './types';
 
 function MetricCard({ id, label, value }: { id: string; label: string; value: string | number }) {
   return (

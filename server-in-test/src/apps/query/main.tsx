@@ -1,7 +1,5 @@
-import { createRoot } from 'react-dom/client';
+import { mountApp } from '../shared/versioning';
 import { QueryApp } from './QueryApp';
-import { parseUiVersion } from '../shared/uiVersion';
-import '../shared/base.css';
 import './query.css';
 
-createRoot(document.getElementById('root')!).render(<QueryApp version={parseUiVersion(location.search)} />);
+mountApp(QueryApp);

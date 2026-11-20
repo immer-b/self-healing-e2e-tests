@@ -17,9 +17,3 @@ export function useReport() {
 
   return { report, refresh, exportCsv };
 }
-
-export interface ReportLayoutProps {
-  report: Report;
-  refresh: () => void;
-  exportCsv: () => void;
-}
