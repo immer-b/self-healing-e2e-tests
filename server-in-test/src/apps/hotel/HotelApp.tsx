@@ -98,7 +98,7 @@ function Shell() {
           <ThemeSelect />
           <button type="button" className="btn btn-ghost btn-block sidebar-signout" onClick={() => setChangingPassword(true)}>
             <Icon name="edit" />
-            Change password
+            <span className="label-mobile-hidden">Change password</span>
           </button>
           <button
             type="button"

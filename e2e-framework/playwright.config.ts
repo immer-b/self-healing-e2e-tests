@@ -40,5 +40,8 @@ export default defineConfig<E2eOptions>({
 
     // The pet hotel staff app: admin, front desk and general staff journeys in a real browser.
     { name: 'hotel', testDir: './e2e/hotel' },
+
+    // General staff work on phones: the same staff journeys on a Pixel 7 viewport with touch.
+    { name: 'hotel-mobile', testDir: './e2e/hotel', testMatch: /staff\.spec\.ts/, use: { ...devices['Pixel 7'] } },
   ],
 });
