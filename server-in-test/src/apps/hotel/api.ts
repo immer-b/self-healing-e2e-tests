@@ -131,7 +131,8 @@ export const api = {
   restorePet: (id: string) => request<Pet>(`/pets/${id}/restore`, send('POST')),
   petStays: (id: string) => request<Stay[]>(`/pets/${id}/stays`),
   notes: (petId: string) => request<Note[]>(`/pets/${petId}/notes`),
-  addNote: (petId: string, text: string, taskId?: string) => request<Note>(`/pets/${petId}/notes`, send('POST', { text, taskId })),
+  addNote: (petId: string, text: string, taskId?: string, amends?: string) =>
+    request<Note>(`/pets/${petId}/notes`, send('POST', { text, taskId, amends })),
 
   arrivals: (date: string) => request<Stay[]>(`/stays/arrivals${query({ date })}`),
   departures: (date: string) => request<Stay[]>(`/stays/departures${query({ date })}`),

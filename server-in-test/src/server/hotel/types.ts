@@ -99,6 +99,8 @@ export interface NoteRecord {
   petId: string;
   text: string;
   taskId: string | null;
+  /** Set on an addendum: the id of the original note it corrects or adds to. */
+  amends: string | null;
 }
 export type Note = Entity<NoteRecord>;
 

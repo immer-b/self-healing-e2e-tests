@@ -267,24 +267,80 @@ export function NotesCard({ petId, petName, taskId, title = 'Notes' }: { petId: 
           <Loading />
         ) : notes.data.length ? (
           <ol className="timeline" aria-label="Note history">
-            {notes.data.map((note: Note) => (
-              <li key={note.id}>
-                <Avatar name={note.createdBy.name} />
-                <div>
-                  <div className="timeline-meta">
-                    <strong>{note.createdBy.name}</strong> · {formatDateTime(note.createdAt)}
-                    {note.taskId && <> · <Badge tone="info">Care round</Badge></>}
-                  </div>
-                  <div className="timeline-text">{note.text}</div>
-                </div>
-              </li>
-            ))}
+            {notes.data
+              .filter((note) => !note.amends)
+              .map((note: Note) => (
+                <NoteItem
+                  key={note.id}
+                  note={note}
+                  addenda={notes.data!.filter((a) => a.amends === note.id).reverse()}
+                  onAddendum={async (text) => {
+                    const added = await api.addNote(petId, text, undefined, note.id);
+                    notes.setData((list) => [added, ...(list ?? [])]);
+                  }}
+                />
+              ))}
           </ol>
         ) : (
           <EmptyState icon="note" title="No notes yet" />
         )}
       </div>
     </Card>
+  );
+}
+
+function NoteItem({ note, addenda, onAddendum }: { note: Note; addenda: Note[]; onAddendum: (text: string) => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState('');
+  const [error, setError] = useState<string>();
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!text.trim()) return setError('Write the addendum first');
+    try {
+      await onAddendum(text);
+      setText('');
+      setOpen(false);
+      setError(undefined);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+  return (
+    <li>
+      <Avatar name={note.createdBy.name} />
+      <div>
+        <div className="timeline-meta">
+          <strong>{note.createdBy.name}</strong> · {formatDateTime(note.createdAt)}
+          {note.taskId && <> · <Badge tone="info">Care round</Badge></>}
+        </div>
+        <div className="timeline-text">{note.text}</div>
+        {addenda.map((a) => (
+          <article key={a.id} className="addendum" aria-label={`Addendum by ${a.createdBy.name}`}>
+            <div className="timeline-meta">
+              <Badge tone="warning">Addendum</Badge> <strong>{a.createdBy.name}</strong> · {formatDateTime(a.createdAt)}
+            </div>
+            <div className="timeline-text">{a.text}</div>
+          </article>
+        ))}
+        {open ? (
+          <form className="form addendum-form" onSubmit={save}>
+            <TextAreaField label="Addendum" placeholder="Add a correction or detail. The original note stays as written." value={text} onChange={(e) => setText(e.target.value)} error={error} />
+            <div style={{ display: 'flex', gap: 8 }}>
+              <button type="submit" className="btn btn-primary btn-sm">
+                Save addendum
+              </button>
+              <button type="button" className="btn btn-ghost btn-sm" onClick={() => setOpen(false)}>
+                Cancel
+              </button>
+            </div>
+          </form>
+        ) : (
+          <button type="button" className="link-button addendum-toggle" onClick={() => setOpen(true)}>
+            Add addendum
+          </button>
+        )}
+      </div>
+    </li>
   );
 }
 

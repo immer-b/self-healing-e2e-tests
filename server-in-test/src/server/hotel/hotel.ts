@@ -312,13 +312,24 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
   const notes = {
     get: (id: string) => store.notes.get(id),
     list: (petId: string) => store.notes.list({ includeDeleted: true, where: (n) => n.petId === petId }).reverse(),
-    add: (petId: string, input: { text: string; taskId?: string | null }, actor: Actor): Outcome<Entity<NoteRecord>> => {
+    /** Appends a note. With `amends`, it is an addendum to an earlier note (always linked to the original). */
+    add: (
+      petId: string,
+      input: { text: string; taskId?: string | null; amends?: string | null },
+      actor: Actor,
+    ): Outcome<Entity<NoteRecord>> => {
       if (!isActive(store.pets.get(petId))) return notFound('Pet');
       const result = validateNote(input);
       if (!result.ok) return invalid(result.errors);
       const taskId = input?.taskId ?? null;
       if (taskId && store.tasks.get(taskId)?.petId !== petId) return invalid({ taskId: 'does not match a task for this pet' });
-      return success(store.notes.create({ petId, text: result.value.text, taskId }, actor));
+      let amends: string | null = null;
+      if (input?.amends) {
+        const target = store.notes.get(input.amends);
+        if (!target || target.petId !== petId) return invalid({ amends: 'does not match a note for this pet' });
+        amends = target.amends ?? target.id;
+      }
+      return success(store.notes.create({ petId, text: result.value.text, taskId, amends }, actor));
     },
   };
 

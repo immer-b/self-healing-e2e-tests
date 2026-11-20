@@ -137,9 +137,9 @@ export function seedHotel({ hotel, store, today }: { hotel: Hotel; store: HotelS
 
   const jordan = { id: 'emp-3', name: 'Jordan Lee' };
   const sam = { id: 'emp-4', name: 'Sam Rivera' };
-  store.notes.create({ petId: pets[0].id, text: 'Settled in well. Ate all of his dinner.', taskId: null }, jordan);
-  store.notes.create({ petId: pets[2].id, text: 'Slight stiffness getting up this morning; gave carprofen with breakfast as instructed.', taskId: null }, sam);
-  store.notes.create({ petId: pets[1].id, text: 'Hid under the bed most of the evening. Ate about half of her food.', taskId: null }, jordan);
+  store.notes.create({ petId: pets[0].id, text: 'Settled in well. Ate all of his dinner.', taskId: null, amends: null }, jordan);
+  store.notes.create({ petId: pets[2].id, text: 'Slight stiffness getting up this morning; gave carprofen with breakfast as instructed.', taskId: null, amends: null }, sam);
+  store.notes.create({ petId: pets[1].id, text: 'Hid under the bed most of the evening. Ate about half of her food.', taskId: null, amends: null }, jordan);
 
   hotel.tasks.generate(today, undefined, { id: 'emp-2', name: 'Priya Shah' });
 }
