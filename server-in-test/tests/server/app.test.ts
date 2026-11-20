@@ -6,6 +6,8 @@ import { join } from 'node:path';
 import { createApp } from '../../src/server/app';
 import { createRecordRepository } from '../../src/server/recordRepository';
 import { DEFAULT_USERS } from '../../src/server/auth';
+import { createClock } from '../../src/server/hotel/clock';
+import { createHotel } from '../../src/server/hotel/hotel';
 import type { RecordInput } from '../../src/server/types';
 
 const seed: RecordInput[] = [
@@ -15,7 +17,7 @@ const seed: RecordInput[] = [
 
 function makeClientDir() {
   const dir = mkdtempSync(join(tmpdir(), 'client-'));
-  for (const app of ['login', 'query', 'report']) {
+  for (const app of ['login', 'query', 'report', 'hotel']) {
     mkdirSync(join(dir, app));
     writeFileSync(join(dir, app, 'index.html'), `<html><head></head><body>${app} app</body></html>`);
   }
@@ -27,7 +29,12 @@ function makeClientDir() {
 describe('HTTP API', () => {
   let app: ReturnType<typeof createApp>;
   beforeEach(() => {
-    app = createApp({ repository: createRecordRepository(seed), users: DEFAULT_USERS, clientDir: makeClientDir() });
+    app = createApp({
+      repository: createRecordRepository(seed),
+      users: DEFAULT_USERS,
+      clientDir: makeClientDir(),
+      hotel: createHotel({ clock: createClock(new Date('2026-11-20T08:00:00')) }),
+    });
   });
 
   describe('POST /api/login', () => {
@@ -130,7 +137,7 @@ describe('HTTP API', () => {
   });
 
   describe('single page apps', () => {
-    it.each(['login', 'query', 'report'])('serves the %s app with deep-link fallback', async (name) => {
+    it.each(['login', 'query', 'report', 'hotel'])('serves the %s app with deep-link fallback', async (name) => {
       expect((await request(app).get(`/${name}/`)).text).toContain(`${name} app`);
       expect((await request(app).get(`/${name}/some/deep/link`)).text).toContain(`${name} app`);
     });
@@ -141,10 +148,65 @@ describe('HTTP API', () => {
       expect(res.headers['content-type']).toMatch(/javascript/);
     });
 
-    it('redirects / to the login app', async () => {
+    it('redirects / to the pet hotel app', async () => {
       const res = await request(app).get('/');
       expect(res.status).toBe(302);
-      expect(res.headers.location).toBe('/login/');
+      expect(res.headers.location).toBe('/hotel/');
+    });
+  });
+
+  describe('pet hotel', () => {
+    const signIn = async () => {
+      const agent = request.agent(app);
+      await agent.post('/api/hotel/auth/login').send({ username: 'frontdesk', password: 'frontdesk123' });
+      return agent;
+    };
+
+    it('mounts the hotel API under /api/hotel', async () => {
+      const agent = await signIn();
+      const res = await agent.get('/api/hotel/pets');
+      expect(res.status).toBe(200);
+      expect(res.body.length).toBeGreaterThan(0);
+    });
+
+    it('accepts room photos larger than the default JSON limit', async () => {
+      const agent = await signIn();
+      const staff = request.agent(app);
+      await staff.post('/api/hotel/auth/login').send({ username: 'jordan', password: 'staff123' });
+      const [task] = (await staff.get('/api/hotel/tasks/mine')).body;
+      const big = Buffer.alloc(2 * 1024 * 1024, 1);
+      const res = await staff.post(`/api/hotel/tasks/${task.id}/photo`).set('Content-Type', 'image/jpeg').send(big);
+      expect(res.status).toBe(200);
+      expect(agent).toBeTruthy();
+    });
+
+    it('rejects photos over 5 MB with a JSON error', async () => {
+      const staff = request.agent(app);
+      await staff.post('/api/hotel/auth/login').send({ username: 'jordan', password: 'staff123' });
+      const [task] = (await staff.get('/api/hotel/tasks/mine')).body;
+      const res = await staff.post(`/api/hotel/tasks/${task.id}/photo`).set('Content-Type', 'image/jpeg').send(Buffer.alloc(6 * 1024 * 1024, 1));
+      expect(res.status).toBe(413);
+      expect(res.body.error).toBe('Photo must be 5 MB or smaller');
+    });
+
+    it('restores the hotel seed and signs everyone out on test reset', async () => {
+      const agent = await signIn();
+      await agent.post('/api/hotel/pets').send({ name: 'Temp', species: 'dog', breed: 'Mutt', ownerId: 'own-1', specialInstructions: '' });
+      await request(app).post('/api/test/reset');
+      expect((await agent.get('/api/hotel/pets')).status).toBe(401);
+      const fresh = await signIn();
+      const names = (await fresh.get('/api/hotel/pets')).body.map((p: { name: string }) => p.name);
+      expect(names).not.toContain('Temp');
+    });
+
+    it('pins the hotel clock for tests', async () => {
+      const res = await request(app).put('/api/test/clock').send({ now: '2027-03-01T09:00:00' });
+      expect(res.status).toBe(200);
+      expect(res.body.today).toBe('2027-03-01');
+      const agent = await signIn();
+      expect((await agent.get('/api/hotel/auth/me')).body.today).toBe('2027-03-01');
+      expect((await request(app).put('/api/test/clock').send({ now: 'garbage' })).status).toBe(400);
+      expect((await request(app).put('/api/test/clock').send({ now: null })).status).toBe(200);
     });
   });
 });

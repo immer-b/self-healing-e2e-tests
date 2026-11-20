@@ -1,7 +1,7 @@
 import express, { Router } from 'express';
 import { join } from 'node:path';
 
-const SPA_NAMES = ['login', 'query', 'report'] as const;
+const SPA_NAMES = ['login', 'query', 'report', 'hotel'] as const;
 
 /**
  * Serves each built single page app under /<name>/ with a fallback to its index.html for deep links,
@@ -15,6 +15,6 @@ export function spaRoutes(clientDir: string) {
     router.use(`/${name}`, (_req, res) => res.sendFile(join(appDir, 'index.html')));
   }
   router.use('/assets', express.static(join(clientDir, 'assets')));
-  router.get('/', (_req, res) => res.redirect('/login/'));
+  router.get('/', (_req, res) => res.redirect('/hotel/'));
   return router;
 }
