@@ -7,6 +7,7 @@ import { Link, matchPath, navigate, usePath } from './router';
 import type { Role } from './api';
 import { LoginPage } from './pages/LoginPage';
 import { ThemeSelect } from './theme';
+import { OfflineProvider } from './offline';
 import { ChangePasswordDialog, ChangePasswordPage } from './pages/ChangePassword';
 import { useState } from 'react';
 import { TodayPage } from './pages/TodayPage';
@@ -113,7 +114,9 @@ function Shell() {
         </div>
       </aside>
       <main className="content" id="main">
-        <Page params={match.params} key={path} />
+        <OfflineProvider employeeId={employee.id}>
+          <Page params={match.params} key={path} />
+        </OfflineProvider>
       </main>
       {changingPassword && <ChangePasswordDialog onClose={() => setChangingPassword(false)} />}
     </div>

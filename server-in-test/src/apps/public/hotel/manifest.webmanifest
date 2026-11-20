@@ -1,0 +1,14 @@
+{
+  "name": "Willow Pet Hotel",
+  "short_name": "Willow",
+  "description": "Staff app for Willow Pet Hotel: arrivals, departures, care rounds and guest records.",
+  "start_url": "/hotel/",
+  "scope": "/hotel/",
+  "display": "standalone",
+  "background_color": "#f6f7f5",
+  "theme_color": "#0f3d3a",
+  "icons": [
+    { "src": "/hotel/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/hotel/icon-maskable.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ]
+}

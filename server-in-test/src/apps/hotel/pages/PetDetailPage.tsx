@@ -8,6 +8,7 @@ import { Link } from '../router';
 import { PetDialog } from './PetsPage';
 import { downloadCsv, slug, toCsv } from '../csv';
 import { vaccinationStatus } from '../../../server/hotel/petProfile';
+import { useOffline } from '../offline';
 
 export function PetDetailPage({ params }: { params: Record<string, string> }) {
   const { employee, today } = useEmployee();
@@ -285,6 +286,11 @@ function StaysCard({
 
 export function NotesCard({ petId, petName, taskId, title = 'Notes' }: { petId: string; petName?: string; taskId?: string; title?: string }) {
   const notes = useResource(() => api.notes(petId), [petId]);
+  const offline = useOffline();
+  const { employee } = useEmployee();
+  useEffect(() => {
+    if (offline.syncVersion) notes.reload();
+  }, [offline.syncVersion]); // eslint-disable-line react-hooks/exhaustive-deps
   const [text, setText] = useState('');
   const [error, setError] = useState<string>();
   const [busy, setBusy] = useState(false);
@@ -297,8 +303,26 @@ export function NotesCard({ petId, petName, taskId, title = 'Notes' }: { petId: 
     }
     setBusy(true);
     try {
-      const note = await api.addNote(petId, text, taskId);
-      notes.setData((list) => [note, ...(list ?? [])]);
+      const note = await offline.submit({ method: 'POST', path: `/api/hotel/pets/${petId}/notes`, body: { text, taskId } }, () =>
+        api.addNote(petId, text, taskId),
+      );
+      const shown: Note =
+        note === 'queued'
+          ? {
+              id: `pending-${Date.now()}`,
+              petId,
+              text: text.trim(),
+              taskId: taskId ?? null,
+              amends: null,
+              createdAt: new Date().toISOString(),
+              createdBy: { id: employee.id, name: employee.name },
+              updatedAt: new Date().toISOString(),
+              updatedBy: { id: employee.id, name: employee.name },
+              deletedAt: null,
+              deletedBy: null,
+            }
+          : note;
+      notes.setData((list) => [shown, ...(list ?? [])]);
       setText('');
       setError(undefined);
     } catch (e) {
@@ -390,6 +414,7 @@ function NoteItem({ note, addenda, onAddendum }: { note: Note; addenda: Note[]; 
         <div className="timeline-meta">
           <strong>{note.createdBy.name}</strong> · {formatDateTime(note.createdAt)}
           {note.taskId && <> · <Badge tone="info">Care round</Badge></>}
+          {note.id.startsWith('pending-') && <> · <Badge tone="warning">Waiting to sync</Badge></>}
         </div>
         <div className="timeline-text">{note.text}</div>
         {addenda.map((a) => (
@@ -412,7 +437,7 @@ function NoteItem({ note, addenda, onAddendum }: { note: Note; addenda: Note[]; 
               </button>
             </div>
           </form>
-        ) : (
+        ) : note.id.startsWith('pending-') ? null : (
           <button type="button" className="link-button addendum-toggle" onClick={() => setOpen(true)}>
             Add addendum
           </button>

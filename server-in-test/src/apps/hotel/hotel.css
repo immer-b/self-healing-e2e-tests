@@ -410,3 +410,8 @@ a.queue-item:hover { border-color: var(--primary); transform: translateY(-1px); 
 .login-page-single { grid-template-columns: 1fr; }
 .vaccine-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .vaccine-list li { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+
+.offline-banner { display: flex; gap: 10px; align-items: center; margin: -8px 0 18px; padding: 10px 14px; border-radius: var(--radius-sm); background: var(--warning-soft); color: var(--text); border: 1px solid color-mix(in srgb, var(--warning) 30%, transparent); font-weight: 500; }
+.offline-banner .icon { color: var(--warning); }
+.offline-banner.is-syncing { background: var(--info-soft); border-color: color-mix(in srgb, var(--info) 30%, transparent); }
+.offline-banner.is-syncing .icon { color: var(--info); }

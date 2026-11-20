@@ -6,12 +6,18 @@ import { ROOM_TYPE_LABELS, SLOT_LABELS, SLOT_TIMES, SPECIES_LABELS, formatDateTi
 import { Link, navigate } from '../router';
 import { NotesCard } from './PetDetailPage';
 import { prepareUpload } from '../image';
+import { useOffline } from '../offline';
+import { useEffect } from 'react';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
 export function TaskPage({ params }: { params: Record<string, string> }) {
   const toast = useToast();
-  const { data: task, error, setData } = useResource(() => api.task(params.id), [params.id]);
+  const { data: task, error, setData, reload } = useResource(() => api.task(params.id), [params.id]);
+  const offline = useOffline();
+  useEffect(() => {
+    if (offline.syncVersion) reload();
+  }, [offline.syncVersion, reload]);
   const [problem, setProblem] = useState<string>();
   const [uploading, setUploading] = useState(false);
   const [completing, setCompleting] = useState(false);
@@ -26,8 +32,10 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
   const toggle = async (field: 'cleaned' | 'fed', value: boolean) => {
     merge({ [field]: value });
     try {
-      const saved = await api.updateTask(task.id, { [field]: value });
-      merge({ cleaned: saved.cleaned, fed: saved.fed });
+      const saved = await offline.submit({ method: 'PUT', path: `/api/hotel/tasks/${task.id}`, body: { [field]: value } }, () =>
+        api.updateTask(task.id, { [field]: value }),
+      );
+      if (saved !== 'queued') merge({ cleaned: saved.cleaned, fed: saved.fed });
       setProblem(undefined);
     } catch (e) {
       merge({ [field]: !value });
@@ -58,6 +66,7 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
   };
 
   const missing = [!task.cleaned && 'clean the room', !task.fed && 'feed', !task.photoId && 'add a photo'].filter(Boolean) as string[];
+  const canComplete = offline.online && offline.pending === 0 && missing.length === 0;
 
   const complete = async () => {
     setCompleting(true);
@@ -155,8 +164,14 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
       </div>
       {!isDone && (
         <div className="complete-bar">
-          <span className="muted">{missing.length ? `Still to do: ${missing.join(', ')}` : 'All set. Mark the round complete to move on.'}</span>
-          <button type="button" className="btn btn-primary btn-lg" disabled={missing.length > 0 || completing} onClick={complete}>
+          <span className="muted">
+            {missing.length
+              ? `Still to do: ${missing.join(', ')}`
+              : !offline.online || offline.pending
+                ? 'Reconnect to complete the round.'
+                : 'All set. Mark the round complete to move on.'}
+          </span>
+          <button type="button" className="btn btn-primary btn-lg" disabled={!canComplete || completing} onClick={complete}>
             <Icon name="check" /> Complete round
           </button>
         </div>

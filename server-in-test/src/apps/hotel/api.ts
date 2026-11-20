@@ -92,6 +92,8 @@ const query = (params: Record<string, string | boolean | undefined>) => {
 type ListParams = { text?: string; includeDeleted?: boolean };
 
 export const api = {
+  /** A request by full path, used to replay writes queued while offline. */
+  raw: (method: string, path: string, body: unknown) => request<unknown>(path.replace(BASE, ''), send(method, body)),
   login: (username: string, password: string) => request<{ employee: Employee }>('/auth/login', send('POST', { username, password })),
   logout: () => request<void>('/auth/logout', send('POST')),
   me: () => request<{ employee: Employee; today: string }>('/auth/me'),

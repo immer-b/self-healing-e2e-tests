@@ -46,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await api.logout().catch(() => {});
+    // Don't leave the last person's rounds and notes in the offline cache on a shared device.
+    if (typeof caches !== 'undefined') await caches.delete('willow-api-v1').catch(() => false);
     setEmployee(null);
   }, []);
 
