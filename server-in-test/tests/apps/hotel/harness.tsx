@@ -1,8 +1,8 @@
 import express from 'express';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { afterEach, expect, vi } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { afterEach, vi } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createClock } from '../../../src/server/hotel/clock';
 import { createHotel, type Hotel } from '../../../src/server/hotel/hotel';
@@ -73,7 +73,7 @@ export async function signInAs(role: keyof typeof ACCOUNTS, path = '/') {
   await user.type(await screen.findByLabelText(/username/i), username);
   await user.type(screen.getByLabelText(/password/i), password);
   await user.click(screen.getByRole('button', { name: /sign in/i }));
-  await waitFor(() => expect(screen.queryByRole('button', { name: /sign in/i })).not.toBeInTheDocument());
+  await screen.findByRole('button', { name: /sign out/i }, { timeout: 5000 });
   return { ...api, user };
 }
 
