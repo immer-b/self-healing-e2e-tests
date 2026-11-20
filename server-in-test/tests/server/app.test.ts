@@ -94,18 +94,36 @@ describe('HTTP API', () => {
     expect((await request(app).get('/api/records')).body).toHaveLength(2);
   });
 
+  describe('UI version', () => {
+    it('starts at version 1', async () => {
+      expect((await request(app).get('/api/ui-version')).body).toEqual({ version: 1 });
+    });
+
+    it('changes the version at runtime', async () => {
+      const res = await request(app).put('/api/ui-version').send({ version: 3 });
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ version: 3 });
+      expect((await request(app).get('/api/ui-version')).body).toEqual({ version: 3 });
+    });
+
+    it.each([{ version: 9 }, { version: '2' }, {}])('rejects an invalid version %j', async (body) => {
+      const res = await request(app).put('/api/ui-version').send(body);
+      expect(res.status).toBe(400);
+      expect(res.body.error).toMatch(/1, 2 or 3/);
+      expect((await request(app).get('/api/ui-version')).body).toEqual({ version: 1 });
+    });
+
+    it('is not affected by the data reset', async () => {
+      await request(app).put('/api/ui-version').send({ version: 2 });
+      await request(app).post('/api/test/reset');
+      expect((await request(app).get('/api/ui-version')).body).toEqual({ version: 2 });
+    });
+  });
+
   describe('single page apps', () => {
     it.each(['login', 'query', 'report'])('serves the %s app with deep-link fallback', async (name) => {
       expect((await request(app).get(`/${name}/`)).text).toContain(`${name} app`);
       expect((await request(app).get(`/${name}/some/deep/link`)).text).toContain(`${name} app`);
-    });
-
-    it('injects the default UI version (1 unless configured) into each app page', async () => {
-      expect((await request(app).get('/login/')).text).toContain('<meta name="ui-version" content="1">');
-      const v3 = createApp({ repository: createRecordRepository(seed), users: DEFAULT_USERS, clientDir: makeClientDir(), uiVersion: 3 });
-      for (const path of ['/login/', '/query/', '/report/deep/link']) {
-        expect((await request(v3).get(path)).text).toContain('<meta name="ui-version" content="3">');
-      }
     });
 
     it('redirects / to the login app', async () => {

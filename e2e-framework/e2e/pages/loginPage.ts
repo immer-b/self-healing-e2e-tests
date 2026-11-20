@@ -5,7 +5,7 @@ import type { Healer } from '../../src';
  * Login page object. Selectors are written against UI v1 only; on other versions the healer
  * resolves them from the fingerprints recorded during the v1 run.
  */
-export function createLoginPage(page: Page, healer: Healer, uiVersion: number) {
+export function createLoginPage(page: Page, healer: Healer) {
   const ui = healer.forPage(page, 'login');
 
   const elements = {
@@ -20,7 +20,7 @@ export function createLoginPage(page: Page, healer: Healer, uiVersion: number) {
   const submit = async () => (await elements.submitButton()).click();
 
   return {
-    goto: () => page.goto(`/login/?v=${uiVersion}`),
+    goto: () => page.goto('/login/'),
     submit,
     login: async (username: string, password: string) => {
       await (await elements.username()).fill(username);

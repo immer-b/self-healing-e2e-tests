@@ -18,7 +18,7 @@ const firstNumber = (text: string) => Number(/\d[\d,]*/.exec(text)?.[0].replace(
  * Selectors target UI v1 (table + dropdown + modals). In v2 (div grid + popover + inline panels) and
  * v3 (cards + drawer) they are healed from the v1 fingerprints.
  */
-export function createResultsPage(page: Page, healer: Healer, uiVersion: number) {
+export function createResultsPage(page: Page, healer: Healer) {
   const ui = healer.forPage(page, 'results');
 
   const elements = {
@@ -57,7 +57,7 @@ export function createResultsPage(page: Page, healer: Healer, uiVersion: number)
   };
 
   return {
-    goto: () => page.goto(`/query/?v=${uiVersion}`),
+    goto: () => page.goto('/query/'),
 
     search: async (text: string) => (await elements.search()).fill(text),
     filterByStatus: async (status: RecordValues['status'] | '') => (await elements.statusFilter()).selectOption(status),

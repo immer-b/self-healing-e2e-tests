@@ -8,7 +8,7 @@ Page objects are written once, against UI v1. When v2 or v3 renames ids, swaps a
 flowchart LR
   subgraph repo[repository]
     direction LR
-    SIT["server-in-test/<br/>Node + Express API<br/>React SPAs: login · query · report<br/>3 UI versions each (?v=1|2|3)"]
+    SIT["server-in-test/<br/>Node + Express API<br/>React SPAs: login · query · report<br/>3 UI versions each<br/>(PUT /api/ui-version)"]
     FW["e2e-framework/<br/>self-healing engine<br/>element store API<br/>page objects + specs"]
   end
   FW -- "drives Chromium via Playwright" --> SIT
@@ -55,12 +55,21 @@ Every healed lookup is added to the test as a `self-healed` annotation and a `se
 ## Try the apps manually
 
 ```bash
-npm run serve --workspace server-in-test                        # UI v1 at http://localhost:3000
-npm run serve:v2 --workspace server-in-test                     # UI v2 (also serve:v1 / serve:v3)
-npm run serve --workspace server-in-test -- --ui-version=3 --port=4000
+npm run serve --workspace server-in-test     # http://localhost:3000 (starts on UI v1)
 ```
 
-Open `/login/`, `/query/` or `/report/`. They render the version the server was started with. Appending `?v=1|2|3` to a URL overrides it for that page, and so do the footer links. Demo credentials are `admin` / `password123`.
+Open `/login/`, `/query/` or `/report/`. To switch every app to another layout while the server runs, call the version endpoint. Open pages pick up the change within about a second, with no reload:
+
+```bash
+curl -X PUT localhost:3000/api/ui-version -H "Content-Type: application/json" -d '{"version": 2}'
+curl localhost:3000/api/ui-version            # {"version":2}
+```
+
+```powershell
+Invoke-RestMethod -Method Put -Uri localhost:3000/api/ui-version -ContentType application/json -Body '{"version": 3}'
+```
+
+The v1 / v2 / v3 buttons in each page's footer call the same endpoint. Demo credentials are `admin` / `password123`. For a side-by-side view of every layout, see [docs/ui-versions.md](docs/ui-versions.md).
 
 ## A note on "chromedriver"
 

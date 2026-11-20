@@ -1,4 +1,4 @@
-/** UI layouts the sample apps can render; chosen per server (--ui-version) or per page (?v=). */
+/** UI layouts the sample apps can render; switched at runtime via PUT /api/ui-version. */
 export const UI_VERSIONS = [1, 2, 3] as const;
 export type UiVersion = (typeof UI_VERSIONS)[number];
 

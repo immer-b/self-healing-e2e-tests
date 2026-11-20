@@ -1,12 +1,15 @@
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
-import { parseUiVersion, readServerUiVersion, type UiVersion } from './uiVersion';
+import type { UiVersion } from './uiVersion';
+import { useUiVersion } from './useUiVersion';
 import { VersionNav } from './VersionNav';
 import './base.css';
 
 export type LayoutRegistry<P> = Record<UiVersion, ComponentType<P>>;
 
-/** Renders the layout registered for `version` plus the version switcher footer. */
+type VersionedApp = ComponentType<{ version: UiVersion }>;
+
+/** Renders the layout registered for `version`. */
 export function VersionedLayout<P extends object>({
   layouts,
   version,
@@ -17,16 +20,22 @@ export function VersionedLayout<P extends object>({
   props: P;
 }) {
   const Layout = layouts[version];
+  return <Layout {...props} />;
+}
+
+/** Renders `App` with the server's current UI version and re-renders when it changes. */
+export function VersionedRoot({ App, pollMs }: { App: VersionedApp; pollMs?: number }) {
+  const { version, changeVersion } = useUiVersion(pollMs);
+  if (!version) return null;
   return (
     <>
-      <Layout {...props} />
-      <VersionNav current={version} />
+      <App version={version} />
+      <VersionNav current={version} onChange={changeVersion} />
     </>
   );
 }
 
-/** Entry point helper: mounts an app into #root using ?v= if present, otherwise the server's default version. */
-export function mountApp(App: ComponentType<{ version: UiVersion }>) {
-  const version = parseUiVersion(location.search, readServerUiVersion(document));
-  createRoot(document.getElementById('root')!).render(<App version={version} />);
+/** Entry point helper: mounts an app into #root, driven by the server's UI version. */
+export function mountApp(App: VersionedApp) {
+  createRoot(document.getElementById('root')!).render(<VersionedRoot App={App} />);
 }

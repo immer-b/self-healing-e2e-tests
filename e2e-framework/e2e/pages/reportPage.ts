@@ -20,7 +20,7 @@ const numbersIn = (text: string) => (text.match(/\d[\d,]*/g) ?? []).map((n) => N
  * list + owner list) and v3 (KPI tiles, bar chart, icon buttons) are healed. Metric values are
  * located by their labels because the numbers themselves change.
  */
-export function createReportPage(page: Page, healer: Healer, uiVersion: number) {
+export function createReportPage(page: Page, healer: Healer) {
   const ui = healer.forPage(page, 'report');
 
   const elements = {
@@ -31,7 +31,7 @@ export function createReportPage(page: Page, healer: Healer, uiVersion: number) 
   };
 
   return {
-    goto: () => page.goto(`/report/?v=${uiVersion}`),
+    goto: () => page.goto('/report/'),
 
     /** Numeric value of a metric, with currency formatting stripped. */
     metric: async (metric: Metric) => numbersIn(await (await elements.metric(metric)).innerText())[0],

@@ -1,15 +1,13 @@
 # server-in-test
 
-The sample application the self-healing framework is tested against: a **Node + Express** backend that serves an API and three **React** single-page apps written in a functional style. Each SPA renders one of **three UI versions**, chosen by the `?v=` query parameter. The versions simulate the markup churn between releases.
+The sample application the self-healing framework is tested against: a **Node + Express** backend that serves an API and three **React** single-page apps written in a functional style. Each SPA renders one of **three UI versions**, which you switch at runtime through `PUT /api/ui-version`. The versions simulate the markup churn between releases.
 
 ## Scripts
 
 ```bash
-npm run serve       # vite build + start the server (UI v1, port 3000)
-npm run serve:v2    # same, serving UI v2 by default (also serve:v1 / serve:v3)
-npm run serve -- --ui-version=3 --port=4000   # any combination of flags
+npm run serve       # vite build + start the server (PORT, default 3000; starts on UI v1)
 npm run build       # build the three SPAs into dist/client
-npm start           # start the server only (expects dist/client; accepts the same flags)
+npm start           # start the server only (expects dist/client to exist)
 npm test            # Vitest: API, domain logic and React component tests
 npm run typecheck   # tsc --noEmit
 ```
@@ -47,18 +45,33 @@ flowchart TB
 | `PUT /api/records/:id` | Partial update, with the same validation |
 | `DELETE /api/records/:id` | `204`, or `404` |
 | `GET /api/report` | Totals, average, counts per status, breakdown per owner |
+| `GET /api/ui-version` | The current UI version: `{ version }` |
+| `PUT /api/ui-version` | `{ version: 1 \| 2 \| 3 }` switches every app's layout at runtime. Returns `400` for anything else |
 | `POST /api/test/reset` | Restores the seed data. End-to-end tests call this before every test |
 
 Demo users: `admin` / `password123` and `viewer` / `viewer123`. Records are seeded from `src/server/seed.ts`.
 
 ## UI versions
 
-**Choosing a version.** The server has a default UI version, which you set with `--ui-version=<1|2|3>` or the `UI_VERSION` environment variable (default `1`). Flags take precedence. The port works the same way: `--port` or `PORT`. When serving each app's `index.html`, the server injects `<meta name="ui-version" content="N">`, so plain URLs like `/login/` render that version. A `?v=` query parameter still overrides it per page. The end-to-end tests use `?v=` so one server can serve all three versions. Links between apps only add `?v=` when the version differs from the server default.
+**Switching versions.** The server holds the current UI version in memory. It starts at `1` and is shared by all three apps. Change it at runtime, with no restart and no reload:
+
+```bash
+curl -X PUT localhost:3000/api/ui-version -H "Content-Type: application/json" -d '{"version": 3}'
+```
+
+Every open page polls `GET /api/ui-version` about once a second and swaps its layout when the value changes. The footer's v1 / v2 / v3 buttons call the same endpoint. The end-to-end tests set the version this way before each test. The data reset endpoint leaves the version unchanged. Screenshots of every layout are in [../docs/ui-versions.md](../docs/ui-versions.md).
 
 ```mermaid
-flowchart LR
-  CLI["--ui-version / UI_VERSION"] --> CFG["parseServerConfig"] --> SPA["spaRoutes injects<br/>meta ui-version"]
-  SPA --> MOUNT["mountApp: ?v= if present,<br/>else meta value"]
+sequenceDiagram
+  participant You as script / curl / footer button
+  participant API as PUT /api/ui-version
+  participant Page as open SPA (useUiVersion)
+  You->>API: { "version": 2 }
+  loop every ~1s
+    Page->>API: GET /api/ui-version
+    API-->>Page: { "version": 2 }
+  end
+  Page->>Page: re-render with LAYOUTS[2]
 ```
 
 Every app keeps one data hook and swaps only the *layout* component. Each version deliberately changes ids, classes, tags, structure and wording, but keeps the semantic hints (roles, labels, input types) that a real redesign usually keeps.
@@ -71,7 +84,7 @@ Every app keeps one data hook and swaps only the *layout* component. Each versio
 
 ```mermaid
 flowchart LR
-  main["main.tsx<br/>mountApp(App)"] --> App["XxxApp<br/>data hook"]
+  main["main.tsx<br/>mountApp(App)"] --> Root["VersionedRoot<br/>useUiVersion()"] --> App["XxxApp<br/>data hook"]
   App --> VL["VersionedLayout<br/>LAYOUTS[version]"]
   VL --> V1["v1 layout"]
   VL --> V2["v2 layout"]
@@ -84,10 +97,9 @@ flowchart LR
 server-in-test/
 ├─ src/
 │  ├─ server/                 # Node backend (Express 5)
-│  │  ├─ index.ts             # entry point: reads config, wires repository + users + client dir, listens
-│  │  ├─ config.ts            # parseServerConfig(): --ui-version / UI_VERSION, --port / PORT
+│  │  ├─ index.ts             # entry point: wires repository + users + client dir, listens on PORT
 │  │  ├─ app.ts               # createApp(): composes the routers below
-│  │  ├─ routes/              # authRoutes, recordRoutes, reportRoutes (+ test reset), spaRoutes
+│  │  ├─ routes/              # authRoutes, recordRoutes, reportRoutes (+ test reset), spaRoutes, uiVersionRoutes
 │  │  ├─ recordRepository.ts  # in-memory CRUD + filtering (closure-based)
 │  │  ├─ validation.ts        # record input validation (full and partial)
 │  │  ├─ auth.ts              # credential check and demo users
@@ -95,7 +107,7 @@ server-in-test/
 │  │  ├─ seed.ts              # seed records
 │  │  └─ types.ts             # DataRecord, RecordStatus, ...
 │  └─ apps/                   # Vite root: three SPAs
-│     ├─ shared/              # api client, ?v= parsing, VersionedLayout/mountApp, VersionNav, base.css
+│     ├─ shared/              # api client, useUiVersion (polls the server), VersionedRoot/mountApp, VersionNav, base.css
 │     ├─ login/               # useLogin hook + layouts/{Classic,Card,Split}Login
 │     ├─ query/               # useRecords + useRecordDraft hooks + layouts/{Table,Grid,CardDrawer}Layout
 │     └─ report/              # useReport hook, reportCsv + layouts/{Dashboard,Sidebar,Compact}Layout

@@ -1,4 +1,4 @@
-import type { DataRecord, RecordFilter, RecordInput } from '../../server/types';
+import type { DataRecord, RecordFilter, RecordInput, UiVersion } from '../../server/types';
 import type { Report } from '../../server/report';
 
 export type { DataRecord, RecordFilter, RecordInput, Report };
@@ -37,4 +37,6 @@ export const api = {
     request<DataRecord>(`/api/records/${id}`, json('PUT', patch)),
   deleteRecord: (id: string) => request<void>(`/api/records/${id}`, { method: 'DELETE' }),
   getReport: () => request<Report>('/api/report'),
+  getUiVersion: () => request<{ version: UiVersion }>('/api/ui-version'),
+  setUiVersion: (version: UiVersion) => request<{ version: UiVersion }>('/api/ui-version', json('PUT', { version })),
 };

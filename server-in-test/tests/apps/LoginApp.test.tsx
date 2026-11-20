@@ -35,7 +35,7 @@ describe.each([1, 2, 3] as const)('LoginApp v%i', (version) => {
     await userEvent.type(passwordField(), 'password123');
     await userEvent.click(submitButton());
     expect(await screen.findByText(/Administrator/)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /results/i })).toHaveAttribute('href', version === 1 ? '/query/' : `/query/?v=${version}`);
+    expect(screen.getByRole('link', { name: /results/i })).toHaveAttribute('href', '/query/');
   });
 
   it('shows the server error for invalid credentials', async () => {

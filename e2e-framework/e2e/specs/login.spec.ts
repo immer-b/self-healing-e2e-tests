@@ -28,10 +28,9 @@ test.describe('login page', () => {
     else expect(healedKeys).toEqual(expect.arrayContaining(['username', 'password', 'submit', 'welcomeMessage']));
   });
 
-  test('navigates to the results page after signing in', async ({ loginPage, page, uiVersion }) => {
+  test('navigates to the results page after signing in', async ({ loginPage, page }) => {
     await loginPage.login('admin', 'password123');
     await loginPage.openResults();
-    // The test server runs with the default UI version 1, so only other versions need ?v= in links.
-    await expect(page).toHaveURL(new RegExp(uiVersion === 1 ? '/query/$' : `/query/\\?v=${uiVersion}$`));
+    await expect(page).toHaveURL(/\/query\/$/);
   });
 });
