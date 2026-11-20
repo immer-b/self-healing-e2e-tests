@@ -75,3 +75,39 @@ Checklist, special instructions, a room photo, notes and emergency contacts. Com
 The same page on a 390 px wide phone screen.
 
 <a href="screenshots/hotel-round-mobile.png"><img src="screenshots/hotel-round-mobile.png" alt="General staff: Care round on a phone" width="320"></a>
+
+## Staff rounds, UI v2: queue
+
+A table layout. The self-healing tests reach it with page objects written for v1.
+
+<a href="screenshots/hotel-queue-v2.png"><img src="screenshots/hotel-queue-v2.png" alt="Staff rounds, UI v2: queue" width="100%"></a>
+
+## Staff rounds, UI v2: round
+
+One column with switches, the photo first and an inline finish button.
+
+<a href="screenshots/hotel-round-v2.png"><img src="screenshots/hotel-round-v2.png" alt="Staff rounds, UI v2: round" width="100%"></a>
+
+## Staff rounds, UI v3: queue
+
+Cards with a counter.
+
+<a href="screenshots/hotel-queue-v3.png"><img src="screenshots/hotel-queue-v3.png" alt="Staff rounds, UI v3: queue" width="100%"></a>
+
+## Staff rounds, UI v3: round
+
+Numbered steps in working order, with a "Finish round" button.
+
+<a href="screenshots/hotel-round-v3.png"><img src="screenshots/hotel-round-v3.png" alt="Staff rounds, UI v3: round" width="100%"></a>
+
+## Front desk: Today in dark mode
+
+The app follows the system theme, or the Light/Dark choice in the sidebar.
+
+<a href="screenshots/hotel-today-dark.png"><img src="screenshots/hotel-today-dark.png" alt="Front desk: Today in dark mode" width="100%"></a>
+
+## General staff: Care round in dark mode
+
+Dark mode on the page staff use most. Contrast is checked by the axe tests in both themes.
+
+<a href="screenshots/hotel-round-dark.png"><img src="screenshots/hotel-round-dark.png" alt="General staff: Care round in dark mode" width="100%"></a>

@@ -33,6 +33,8 @@ interface Shot {
   /** Capture only the viewport instead of the whole scrollable page. */
   viewportOnly?: boolean;
   dark?: boolean;
+  /** Runtime UI version for the staff rounds pages (1 when omitted). */
+  uiVersion?: 1 | 2 | 3;
   prepare?: (page: Page) => Promise<void>;
 }
 
@@ -102,6 +104,10 @@ const SHOTS: Shot[] = [
     description: 'The same page on a 390 px wide phone screen.',
     prepare: openRoundAndFill,
   },
+  { name: 'queue-v2', title: 'Staff rounds, UI v2: queue', role: 'staff', path: '/hotel/queue', uiVersion: 2, description: 'A table layout. The self-healing tests reach it with page objects written for v1.' },
+  { name: 'round-v2', title: 'Staff rounds, UI v2: round', role: 'staff', path: '/hotel/queue', uiVersion: 2, viewportOnly: true, description: 'One column with switches, the photo first and an inline finish button.', prepare: openRoundAndFill },
+  { name: 'queue-v3', title: 'Staff rounds, UI v3: queue', role: 'staff', path: '/hotel/queue', uiVersion: 3, description: 'Cards with a counter.' },
+  { name: 'round-v3', title: 'Staff rounds, UI v3: round', role: 'staff', path: '/hotel/queue', uiVersion: 3, viewportOnly: true, description: 'Numbered steps in working order, with a "Finish round" button.', prepare: openRoundAndFill },
   {
     name: 'today-dark', title: 'Front desk: Today in dark mode', role: 'receiving', path: '/hotel/today', dark: true, viewportOnly: true,
     description: 'The app follows the system theme, or the Light/Dark choice in the sidebar.',
@@ -114,10 +120,11 @@ const SHOTS: Shot[] = [
 ];
 
 async function openRoundAndFill(page: Page) {
-  await page.getByRole('list', { name: 'My rounds' }).getByRole('listitem').first().getByRole('link').click();
-  await page.getByRole('checkbox', { name: 'Room cleaned' }).check();
-  await page.getByRole('checkbox', { name: 'Fed' }).check();
-  await page.getByLabel('Photo of the pet in the room').setInputFiles({ name: 'room.png', mimeType: 'image/png', buffer: await samplePhoto(page) });
+  await page.locator('main a[href*="/hotel/queue/task-"]').first().click();
+  // Works in every rounds layout (v1/v2/v3 label these controls differently).
+  await page.getByRole('checkbox', { name: /clean/i }).check();
+  await page.getByRole('checkbox', { name: /fed|feed/i }).check();
+  await page.locator('input[type=file]').setInputFiles({ name: 'room.png', mimeType: 'image/png', buffer: await samplePhoto(page) });
   await page.getByRole('img', { name: /in E-101/ }).waitFor();
 }
 
@@ -157,6 +164,7 @@ async function capture(browser: Browser, shot: Shot) {
   });
   const page = await context.newPage();
   await context.request.post(`${BASE_URL}/api/test/reset`);
+  await context.request.put(`${BASE_URL}/api/ui-version`, { data: { version: shot.uiVersion ?? 1 } });
   await page.goto(`${BASE_URL}${shot.path}`);
   if (shot.role) {
     const [username, password] = ACCOUNTS[shot.role];
@@ -203,6 +211,7 @@ try {
   for (const shot of SHOTS) await capture(browser, shot);
 } finally {
   await api.request.put(`${BASE_URL}/api/test/clock`, { data: { now: null } });
+  await api.request.put(`${BASE_URL}/api/ui-version`, { data: { version: 1 } });
   await api.request.post(`${BASE_URL}/api/test/reset`);
   await browser.close();
 }
