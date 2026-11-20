@@ -57,4 +57,28 @@ test.describe('general staff', () => {
     }
     expect((await page.request.get('/api/hotel/pets')).status()).toBe(403);
   });
+
+  test('keeps working through a dropped connection and syncs on reconnect', async ({ page, context }) => {
+    await signIn(page, 'staff');
+    const manifest = await page.request.get('/hotel/manifest.webmanifest');
+    expect(manifest.ok()).toBe(true);
+    await expect.poll(() => page.evaluate(async () => (await navigator.serviceWorker.getRegistration('/hotel/'))?.active?.state)).toBe('activated');
+
+    await page.getByRole('list', { name: 'My rounds' }).getByRole('listitem').first().getByRole('link').click();
+    await expect(page.getByRole('heading', { level: 1, name: 'Biscuit' })).toBeVisible();
+    const taskId = page.url().split('/').pop()!;
+
+    await context.setOffline(true);
+    await expect(page.getByText("You're offline.")).toBeVisible();
+    await page.getByRole('checkbox', { name: 'Room cleaned' }).check();
+    const notes = page.getByRole('region', { name: 'Notes' });
+    await notes.getByLabel('New note').fill('No signal in the east wing.');
+    await notes.getByRole('button', { name: 'Add note' }).click();
+    await expect(notes.getByRole('listitem').first()).toContainText('Waiting to sync');
+
+    await context.setOffline(false);
+    await expect(page.getByText(/Synced 2 changes/)).toBeVisible();
+    const task = await (await page.request.get(`/api/hotel/tasks/${taskId}`)).json();
+    expect(task.cleaned).toBe(true);
+  });
 });
