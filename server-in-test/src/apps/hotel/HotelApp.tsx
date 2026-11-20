@@ -6,6 +6,7 @@ import { ROLE_LABELS } from './lib';
 import { Link, matchPath, navigate, usePath } from './router';
 import type { Role } from './api';
 import { LoginPage } from './pages/LoginPage';
+import { ThemeSelect } from './theme';
 import { TodayPage } from './pages/TodayPage';
 import { SchedulePage } from './pages/SchedulePage';
 import { PetsPage } from './pages/PetsPage';
@@ -90,6 +91,7 @@ function Shell() {
               <div className="user-role">{ROLE_LABELS[employee.role]}</div>
             </div>
           </div>
+          <ThemeSelect />
           <button
             type="button"
             className="btn btn-ghost btn-block sidebar-signout"

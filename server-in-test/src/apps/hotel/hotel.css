@@ -39,7 +39,7 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light']) {
     --bg: #0e1412;
     --surface: #151d1a;
     --surface-2: #1b2521;
@@ -68,6 +68,37 @@
     --shadow-lg: 0 20px 40px -12px rgb(0 0 0 / 0.6);
     color-scheme: dark;
   }
+}
+
+/* Chosen explicitly in the sidebar (wins over the system setting). */
+:root[data-theme='dark'] {
+  --bg: #0e1412;
+  --surface: #151d1a;
+  --surface-2: #1b2521;
+  --surface-hover: #1a2420;
+  --border: #26322d;
+  --border-strong: #34433d;
+  --text: #e7eeea;
+  --text-2: #b1beb7;
+  --text-3: #84928b;
+  --primary: #2bb3a3;
+  --primary-hover: #3cc4b4;
+  --primary-soft: #11332f;
+  --primary-text: #7fdcd0;
+  --sidebar: #0a1210;
+  --sidebar-2: #132420;
+  --info: #7aa2ff;
+  --info-soft: #172443;
+  --success: #4ade80;
+  --success-soft: #12301e;
+  --warning: #fbbf24;
+  --warning-soft: #33270f;
+  --danger: #f87171;
+  --danger-soft: #3a1715;
+  --accent: #b794f6;
+  --accent-soft: #2a1f43;
+  --shadow-lg: 0 20px 40px -12px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -372,3 +403,7 @@ a.queue-item:hover { border-color: var(--primary); transform: translateY(-1px); 
 .addendum { margin-top: 8px; padding: 8px 12px; border-left: 3px solid var(--warning); background: var(--warning-soft); border-radius: 0 var(--radius-sm) var(--radius-sm) 0; }
 .addendum-toggle { margin-top: 6px; font-size: 12.5px; }
 .addendum-form { margin-top: 8px; }
+
+.theme-select { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 0 8px; font-size: 12.5px; color: var(--sidebar-text); }
+.theme-select select { background: var(--sidebar-2); color: var(--sidebar-text-strong); border: 1px solid rgb(255 255 255 / 0.12); border-radius: 6px; padding: 3px 6px; font-size: 12.5px; }
+@media (max-width: 860px) { .theme-select span { display: none; } }
