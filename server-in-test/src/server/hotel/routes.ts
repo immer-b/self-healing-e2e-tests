@@ -4,6 +4,7 @@ import type { Hotel } from './hotel';
 import type { Outcome } from './outcome';
 import { MAX_PHOTO_BYTES, PHOTO_TYPES } from './photos';
 import { readCookie, SESSION_COOKIE, SESSION_TTL_MS } from './sessions';
+import { isOverdue } from './scheduling';
 import type { Employee, Entity, PetInput, Role, StayRecord } from './types';
 
 type AuthedRequest = Request & { employee: Employee };
@@ -244,6 +245,7 @@ export function hotelRoutes(hotel: Hotel) {
         total: tasks.length,
         completed: tasks.filter((t) => t.status === 'completed').length,
         unassigned: tasks.filter((t) => !t.assigneeId).length,
+        overdue: tasks.filter((t) => isOverdue(t, today(), hotel.clock.minutesIntoDay())).length,
       },
     });
   });

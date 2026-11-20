@@ -4,7 +4,7 @@ import { createEntityStore, type Entity, type EntityStore } from './entityStore'
 import { conflict, fromValidation, invalid, notFound, success, type Outcome } from './outcome';
 import { hashPassword, verifyPassword } from './passwords';
 import { createPhotoStore } from './photos';
-import { assignEvenly, planCareTasks } from './scheduling';
+import { assignEvenly, isOverdue, planCareTasks } from './scheduling';
 import { seedHotel } from './seed';
 import { createSessionStore } from './sessions';
 import { createLoginThrottle } from './loginThrottle';
@@ -357,6 +357,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
       room: room && { id: room.id, name: room.name, type: room.type },
       owner: owner && { id: owner.id, name: owner.name, contacts: owner.contacts },
       assignee: assignee && { id: assignee.id, name: assignee.name },
+      overdue: isOverdue(task, clock.today(), clock.minutesIntoDay()),
     };
   };
 

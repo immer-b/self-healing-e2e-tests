@@ -36,6 +36,7 @@ export type TaskDetail = Task & {
   room?: { id: string; name: string; type: RoomType };
   owner?: { id: string; name: string; contacts: Contact[] };
   assignee?: { id: string; name: string };
+  overdue: boolean;
 };
 export type LabeledAuditEntry = AuditEntry & { label: string };
 
@@ -46,7 +47,7 @@ export interface Dashboard {
   inHouse: number;
   rooms: number;
   occupiedRooms: number;
-  tasks: { total: number; completed: number; unassigned: number };
+  tasks: { total: number; completed: number; unassigned: number; overdue: number };
 }
 
 export interface ApiError extends Error {

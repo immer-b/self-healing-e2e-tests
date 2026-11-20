@@ -76,6 +76,8 @@ export function QueuePage(_props: { params: Record<string, string> }) {
                     </span>
                     {isDone ? (
                       <Badge tone="success">Done</Badge>
+                    ) : task.overdue ? (
+                      <Badge tone="danger">Overdue</Badge>
                     ) : (
                       <span className="btn btn-secondary btn-sm" aria-hidden="true">
                         Start

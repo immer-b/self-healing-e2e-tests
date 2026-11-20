@@ -138,6 +138,8 @@ export function SchedulePage(_props: { params: Record<string, string> }) {
                       <td>
                         {task.status === 'completed' ? (
                           <Badge tone="success">Done</Badge>
+                        ) : task.overdue ? (
+                          <Badge tone="danger">Overdue</Badge>
                         ) : task.assigneeId ? (
                           <Badge tone="info">To do</Badge>
                         ) : (

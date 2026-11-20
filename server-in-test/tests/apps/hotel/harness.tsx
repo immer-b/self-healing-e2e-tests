@@ -66,8 +66,8 @@ export function renderAt(path = '/') {
 }
 
 /** Starts the API, renders the app and signs in as `role` (landing on that role's home page). */
-export async function signInAs(role: keyof typeof ACCOUNTS, path = '/') {
-  const api = await startHotelApi();
+export async function signInAs(role: keyof typeof ACCOUNTS, path = '/', now?: string) {
+  const api = await startHotelApi(now);
   const { user } = renderAt(path);
   const [username, password] = ACCOUNTS[role];
   await user.type(await screen.findByLabelText(/username/i), username);

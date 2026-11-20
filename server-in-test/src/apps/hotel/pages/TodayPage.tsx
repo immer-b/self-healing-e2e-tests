@@ -58,7 +58,9 @@ export function TodayPage(_props: { params: Record<string, string> }) {
           <StatCard
             label="Care rounds done"
             value={`${summary.tasks.completed} / ${summary.tasks.total}`}
-            hint={summary.tasks.unassigned ? `${summary.tasks.unassigned} unassigned` : 'All assigned'}
+            hint={[summary.tasks.overdue && `${summary.tasks.overdue} overdue`, summary.tasks.unassigned ? `${summary.tasks.unassigned} unassigned` : 'All assigned']
+              .filter(Boolean)
+              .join(' · ')}
             icon="queue"
             tone="accent"
           />

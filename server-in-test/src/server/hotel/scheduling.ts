@@ -40,6 +40,18 @@ export function planCareTasks(
     .filter((task) => !exists.has(`${task.stayId}:${task.slot}`));
 }
 
+/** Slot start times, in minutes after midnight (hotel time). */
+export const SLOT_MINUTES: Record<CareSlot, number> = { morning: 8 * 60, evening: 17 * 60 };
+/** How long after its slot time a round may stay open before it counts as overdue. */
+export const OVERDUE_GRACE_MINUTES = 120;
+
+/** A pending round from an earlier day, or more than the grace period past its slot time today. */
+export function isOverdue(task: { date: IsoDate; slot: CareSlot; status: string }, today: IsoDate, minutesIntoDay: number) {
+  if (task.status !== 'pending') return false;
+  if (task.date < today) return true;
+  return task.date === today && minutesIntoDay > SLOT_MINUTES[task.slot] + OVERDUE_GRACE_MINUTES;
+}
+
 /** Count of tasks per assignee, ignoring unassigned ones. */
 export function workload(assigneeIds: readonly (string | null)[]): Record<string, number> {
   const counts: Record<string, number> = {};
