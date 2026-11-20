@@ -153,6 +153,19 @@ describe('admin: employees and change logs', () => {
     expect(res.body[0].at).toBe(new Date(`${TODAY}T08:00:00`).toISOString());
     expect(res.body.at(-1).action).toBe('create');
   });
+
+  it('labels change-log entries with a readable name for the entity', async () => {
+    const admin = await signedIn('admin');
+    const label = async (entityType: string, entityId: string) =>
+      (await admin.get(`/api/hotel/audit?entityType=${entityType}&entityId=${entityId}`)).body[0].label;
+    expect(await label('pet', 'pet-1')).toBe('Biscuit');
+    expect(await label('employee', 'emp-3')).toBe('Jordan Lee');
+    expect(await label('owner', 'own-1')).toBe('Dana Whitfield');
+    expect(await label('room', 'room-1')).toBe('E-101');
+    expect(await label('stay', 'stay-1')).toBe('Biscuit in E-101');
+    expect(await label('note', 'note-1')).toBe('Note on Biscuit');
+    expect(await label('task', 'task-1')).toMatch(/^(Morning|Evening) round · \w+$/);
+  });
 });
 
 describe('front desk: owners, pets, rooms and stays', () => {

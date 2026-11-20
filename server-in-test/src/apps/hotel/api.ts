@@ -5,6 +5,7 @@ import type {
   Employee,
   EmployeeInput,
   Entity,
+  FieldChange,
   Note,
   OwnerInput,
   PetInput,
@@ -17,7 +18,7 @@ import type {
   Task,
 } from '../../server/hotel/types';
 
-export type { AuditEntry, CareSlot, Contact, Employee, EmployeeInput, Note, OwnerInput, PetInput, Role, RoomInput, RoomType, Species, StayInput, Task };
+export type { AuditEntry, CareSlot, Contact, Employee, EmployeeInput, FieldChange, Note, OwnerInput, PetInput, Role, RoomInput, RoomType, Species, StayInput, Task };
 
 export type Owner = Entity<OwnerInput> & { petCount?: number };
 export type Room = Entity<RoomInput>;
@@ -36,6 +37,8 @@ export type TaskDetail = Task & {
   owner?: { id: string; name: string; contacts: Contact[] };
   assignee?: { id: string; name: string };
 };
+export type LabeledAuditEntry = AuditEntry & { label: string };
+
 export interface Dashboard {
   date: string;
   arrivals: number;
@@ -95,7 +98,7 @@ export const api = {
   archiveEmployee: (id: string) => request<Employee>(`/employees/${id}`, send('DELETE')),
   restoreEmployee: (id: string) => request<Employee>(`/employees/${id}/restore`, send('POST')),
 
-  audit: (params: { entityType?: string; entityId?: string } = {}) => request<AuditEntry[]>(`/audit${query(params)}`),
+  audit: (params: { entityType?: string; entityId?: string } = {}) => request<LabeledAuditEntry[]>(`/audit${query(params)}`),
 
   rooms: (params: { includeDeleted?: boolean } = {}) => request<Room[]>(`/rooms${query(params)}`),
   occupancy: (date: string) => request<RoomOccupancy[]>(`/rooms/occupancy${query({ date })}`),

@@ -31,6 +31,9 @@ export function navigate(to: string, { replace = false } = {}) {
 /** The current path inside the app, e.g. "/pets/pet-3". */
 export const usePath = () => useSyncExternalStore(subscribe, appPath);
 
+/** The current query string as URLSearchParams (re-renders when it changes). */
+export const useSearchParams = () => new URLSearchParams(useSyncExternalStore(subscribe, () => window.location.search));
+
 /** `matchPath('/pets/:id', '/pets/pet-3')` -> `{ id: 'pet-3' }`, or null. */
 export function matchPath(pattern: string, path: string): Record<string, string> | null {
   const patternParts = pattern.split('/');

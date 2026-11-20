@@ -300,6 +300,7 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
   /* ---------------- notes ---------------- */
 
   const notes = {
+    get: (id: string) => store.notes.get(id),
     list: (petId: string) => store.notes.list({ includeDeleted: true, where: (n) => n.petId === petId }).reverse(),
     add: (petId: string, input: { text: string; taskId?: string | null }, actor: Actor): Outcome<Entity<NoteRecord>> => {
       if (!isActive(store.pets.get(petId))) return notFound('Pet');
@@ -356,6 +357,8 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
           where: (t) => (!date || t.date === date) && (!assigneeId || t.assigneeId === assigneeId) && (!status || t.status === status),
         }),
       ),
+    /** Any task, including ones dropped when a stay ended (for the change log). */
+    find: (id: string) => store.tasks.get(id),
     board: (date: IsoDate) => tasks.list({ date }).map(detail),
     get: (id: string) => {
       const task = store.tasks.get(id);

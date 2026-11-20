@@ -114,15 +114,32 @@ export function hotelRoutes(hotel: Hotel) {
 
   /* ---------- change log (admin) ---------- */
 
+  const petName = (id: string | undefined) => (id ? hotel.pets.get(id)?.name : undefined) ?? 'unknown pet';
+  const SLOT_NAMES: Record<string, string> = { morning: 'Morning', evening: 'Evening' };
+  const LABELS: Record<string, (id: string) => string | undefined> = {
+    employee: (id) => hotel.employees.get(id)?.name,
+    owner: (id) => hotel.owners.get(id)?.name,
+    pet: (id) => hotel.pets.get(id)?.name,
+    room: (id) => hotel.rooms.get(id)?.name,
+    stay: (id) => {
+      const stay = hotel.stays.get(id);
+      return stay && `${petName(stay.petId)} in ${hotel.rooms.get(stay.roomId)?.name ?? 'unknown room'}`;
+    },
+    note: (id) => `Note on ${petName(hotel.notes.get(id)?.petId)}`,
+    task: (id) => {
+      const task = hotel.tasks.find(id);
+      return task && `${SLOT_NAMES[task.slot]} round · ${petName(task.petId)}`;
+    },
+  };
+
   router.get('/audit', ADMIN, (req, res) => {
     const limit = Number(req.query.limit);
-    res.json(
-      hotel.audit.list({
-        entityType: str(req.query.entityType) || undefined,
-        entityId: str(req.query.entityId) || undefined,
-        limit: Number.isInteger(limit) && limit > 0 ? limit : 500,
-      }),
-    );
+    const entries = hotel.audit.list({
+      entityType: str(req.query.entityType) || undefined,
+      entityId: str(req.query.entityId) || undefined,
+      limit: Number.isInteger(limit) && limit > 0 ? limit : 500,
+    });
+    res.json(entries.map((entry) => ({ ...entry, label: LABELS[entry.entityType]?.(entry.entityId) ?? entry.entityId })));
   });
 
   /* ---------- rooms ---------- */
