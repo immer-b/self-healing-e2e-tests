@@ -25,5 +25,16 @@ export default defineConfig({
     setupFiles: ['tests/setup.ts'],
     // The hotel UI tests drive full forms against a real in-process API.
     testTimeout: 20_000,
+    coverage: {
+      provider: 'v8',
+      include: ['src/**/*.{ts,tsx}'],
+      exclude: ['src/**/main.tsx', 'src/server/index.ts', 'src/apps/vite-env.d.ts'],
+      reporter: ['text-summary', 'html'],
+      // Floors for the pet hotel; the build fails if coverage drops below them.
+      thresholds: {
+        'src/server/hotel/**': { lines: 90, statements: 88, functions: 88 },
+        'src/apps/hotel/**': { lines: 80, statements: 80, functions: 80 },
+      },
+    },
   },
 });

@@ -10,3 +10,4 @@ server-in-test/.e2e-data/
 # Visual baselines are committed from Linux CI only
 e2e-framework/e2e/**/*-win32.png
 e2e-framework/e2e/**/*-darwin.png
+coverage/
