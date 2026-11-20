@@ -1,5 +1,6 @@
 import type { Actor, AuditLog, FieldChange } from './auditLog';
 import type { Clock } from './clock';
+import { memoryPersistence, type Persistence } from './persistence';
 
 export interface EntityMeta {
   id: string;
@@ -35,10 +36,13 @@ export function createEntityStore<T extends object>(options: {
   clock: Clock;
   /** Fields whose values are masked in the change log (for example password hashes). */
   secretFields?: readonly string[];
+  /** Where entities are written through to. In memory only by default. */
+  persistence?: Persistence;
 }) {
-  const { entityType, idPrefix, audit, clock, secretFields = [] } = options;
-  let items: Entity<T>[] = [];
-  let nextId = 1;
+  const { entityType, idPrefix, audit, clock, secretFields = [], persistence = memoryPersistence() } = options;
+  let items: Entity<T>[] = persistence.loadAll<Entity<T>>(entityType);
+  let nextId = items.reduce((max, item) => Math.max(max, Number(item.id.split('-').pop()) || 0), 0) + 1;
+  const save = (entity: Entity<T>) => persistence.put(entityType, entity.id, entity);
 
   const mask = (field: string, value: unknown) =>
     value === null || value === undefined ? null : secretFields.includes(field) ? SECRET : value;
@@ -64,6 +68,7 @@ export function createEntityStore<T extends object>(options: {
 
   const stamp = (index: number, changes: Partial<EntityMeta>) => {
     items[index] = { ...items[index], ...changes };
+    save(items[index]);
     return copy(items[index]);
   };
 
@@ -84,6 +89,7 @@ export function createEntityStore<T extends object>(options: {
         deletedBy: null,
       } as Entity<T>;
       items.push(entity);
+      save(entity);
       log(entity.id, 'create', actor, diff({}, data));
       return copy(entity);
     },
@@ -104,6 +110,7 @@ export function createEntityStore<T extends object>(options: {
       const changes = diff(before as Partial<T>, after as Partial<T>);
       if (!changes.length) return copy(before);
       items[index] = { ...after, updatedAt: clock.now().toISOString(), updatedBy: actor };
+      save(items[index]);
       log(id, action, actor, changes);
       return copy(items[index]);
     },
@@ -125,6 +132,7 @@ export function createEntityStore<T extends object>(options: {
     reset: () => {
       items = [];
       nextId = 1;
+      persistence.clear(entityType);
     },
   };
 }

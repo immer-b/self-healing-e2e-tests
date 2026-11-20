@@ -5,3 +5,5 @@ playwright-report/
 .healing-store/
 *.log
 .env
+server-in-test/data/
+server-in-test/.e2e-data/

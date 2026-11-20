@@ -8,6 +8,7 @@ import { assignEvenly, careSlotsFor, isOverdue, planCareTasks } from './scheduli
 import { seedHotel } from './seed';
 import { createSessionStore } from './sessions';
 import { createLoginThrottle } from './loginThrottle';
+import { memoryPersistence, type Persistence } from './persistence';
 import {
   CARE_SLOTS,
   type Employee,
@@ -44,19 +45,31 @@ export interface ListFilter {
  * Everything is in memory and seeded relative to the clock's "today". All writes are attributed
  * to an actor and land in the audit log; nothing is ever physically deleted.
  */
-export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boolean }) {
-  const audit = createAuditLog(clock);
-  const photos = createPhotoStore(clock);
+export function createHotel({
+  clock,
+  seed = true,
+  persistence = memoryPersistence(),
+  photosDir,
+}: {
+  clock: Clock;
+  seed?: boolean;
+  /** Where data is written through to (SQLite in production). In memory by default. */
+  persistence?: Persistence;
+  /** Folder for room photos. Photos stay in memory when omitted. */
+  photosDir?: string;
+}) {
+  const audit = createAuditLog(clock, persistence);
+  const photos = createPhotoStore(clock, { dir: photosDir, persistence });
   const sessions = createSessionStore(clock);
   const loginThrottle = createLoginThrottle(clock);
   const store = {
-    employees: createEntityStore<EmployeeRecord>({ entityType: 'employee', idPrefix: 'emp', audit, clock, secretFields: ['passwordHash'] }),
-    rooms: createEntityStore<RoomInput>({ entityType: 'room', idPrefix: 'room', audit, clock }),
-    owners: createEntityStore<OwnerInput>({ entityType: 'owner', idPrefix: 'own', audit, clock }),
-    pets: createEntityStore<PetInput>({ entityType: 'pet', idPrefix: 'pet', audit, clock }),
-    stays: createEntityStore<StayRecord>({ entityType: 'stay', idPrefix: 'stay', audit, clock }),
-    notes: createEntityStore<NoteRecord>({ entityType: 'note', idPrefix: 'note', audit, clock }),
-    tasks: createEntityStore<TaskRecord>({ entityType: 'task', idPrefix: 'task', audit, clock }),
+    employees: createEntityStore<EmployeeRecord>({ entityType: 'employee', idPrefix: 'emp', audit, clock, persistence, secretFields: ['passwordHash'] }),
+    rooms: createEntityStore<RoomInput>({ entityType: 'room', idPrefix: 'room', audit, clock, persistence }),
+    owners: createEntityStore<OwnerInput>({ entityType: 'owner', idPrefix: 'own', audit, clock, persistence }),
+    pets: createEntityStore<PetInput>({ entityType: 'pet', idPrefix: 'pet', audit, clock, persistence }),
+    stays: createEntityStore<StayRecord>({ entityType: 'stay', idPrefix: 'stay', audit, clock, persistence }),
+    notes: createEntityStore<NoteRecord>({ entityType: 'note', idPrefix: 'note', audit, clock, persistence }),
+    tasks: createEntityStore<TaskRecord>({ entityType: 'task', idPrefix: 'task', audit, clock, persistence }),
   };
 
   const isActive = <T>(entity: Entity<T> | undefined): entity is Entity<T> => !!entity && !entity.deletedAt;
@@ -539,17 +552,22 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
     stays,
     notes,
     tasks,
+    /** Back to the seed (test support). Signs everyone out. */
     reset: () => {
-      Object.values(store).forEach((s) => s.reset());
-      audit.reset();
-      photos.reset();
+      persistence.transaction(() => {
+        Object.values(store).forEach((s) => s.reset());
+        audit.reset();
+        photos.reset();
+        if (seed) seedHotel({ hotel, store, today: clock.today() });
+      });
       sessions.reset();
       loginThrottle.reset();
-      if (seed) seedHotel({ hotel, store, today: clock.today() });
     },
+    close: () => persistence.close(),
   };
 
-  hotel.reset();
+  // First start (or in-memory use): seed. A persisted hotel keeps its data across restarts.
+  if (!store.employees.list({ includeDeleted: true }).length) hotel.reset();
   return hotel;
 }
 

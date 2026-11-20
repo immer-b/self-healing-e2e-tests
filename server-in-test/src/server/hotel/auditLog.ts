@@ -1,4 +1,5 @@
 import type { Clock } from './clock';
+import { memoryPersistence, type Persistence } from './persistence';
 
 /** Who performed an action. Stored by value so the log survives renames and deletions. */
 export interface Actor {
@@ -38,14 +39,15 @@ export interface AuditFilter {
 const sequence = (id: string) => Number(id.replace(/^aud-/, ''));
 
 /** Append-only change log. Entries are never edited or removed (except by a full test reset). */
-export function createAuditLog(clock: Clock) {
-  let entries: AuditEntry[] = [];
-  let nextId = 1;
+export function createAuditLog(clock: Clock, persistence: Persistence = memoryPersistence()) {
+  let entries: AuditEntry[] = persistence.loadAll<AuditEntry>('audit');
+  let nextId = entries.reduce((max, e) => Math.max(max, sequence(e.id)), 0) + 1;
 
   return {
     record: (entry: Omit<AuditEntry, 'id' | 'at'>): AuditEntry => {
       const stored = structuredClone({ ...entry, id: `aud-${nextId++}`, at: clock.now().toISOString() });
       entries.push(stored);
+      persistence.put('audit', stored.id, stored);
       return structuredClone(stored);
     },
     list: ({ entityType, entityId, limit, before, from, to }: AuditFilter = {}): AuditEntry[] => {
@@ -64,6 +66,7 @@ export function createAuditLog(clock: Clock) {
     reset: () => {
       entries = [];
       nextId = 1;
+      persistence.clear('audit');
     },
   };
 }
