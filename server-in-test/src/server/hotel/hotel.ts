@@ -187,6 +187,21 @@ export function createHotel({ clock, seed = true }: { clock: Clock; seed?: boole
           ),
       }),
     get: (id: string) => store.owners.get(id),
+    /** Active owners who look like the same person: same name, same email, or a shared phone number. */
+    duplicates: ({ name, email, phones = [], excludeId }: { name?: string; email?: string; phones?: string[]; excludeId?: string }) => {
+      const norm = (text?: string) => (text ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+      const digits = (text: string) => text.replace(/\D/g, '');
+      const wantedName = norm(name);
+      const wantedEmail = norm(email);
+      const wantedPhones = new Set(phones.map(digits).filter((d) => d.length >= 7));
+      return store.owners.list({
+        where: (o) =>
+          o.id !== excludeId &&
+          ((!!wantedName && norm(o.name) === wantedName) ||
+            (!!wantedEmail && norm(o.email) === wantedEmail) ||
+            o.contacts.some((c) => c.phones.some((p) => wantedPhones.has(digits(p.number))))),
+      });
+    },
     create: (input: OwnerInput, actor: Actor): Outcome<Entity<OwnerInput>> => {
       const result = validateOwner(input);
       return result.ok ? success(store.owners.create(result.value, actor)) : invalid(result.errors);

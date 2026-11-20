@@ -118,6 +118,12 @@ export const api = {
 
   owners: (params: ListParams = {}) => request<Owner[]>(`/owners${query(params)}`),
   owner: (id: string) => request<Owner>(`/owners/${id}`),
+  duplicateOwners: ({ name, email, phones, excludeId }: { name: string; email: string; phones: string[]; excludeId?: string }) => {
+    const params = new URLSearchParams({ name, email });
+    phones.filter(Boolean).forEach((p) => params.append('phone', p));
+    if (excludeId) params.set('excludeId', excludeId);
+    return request<Owner[]>(`/owners/duplicates?${params}`);
+  },
   createOwner: (input: OwnerInput) => request<Owner>('/owners', send('POST', input)),
   updateOwner: (id: string, patch: Partial<OwnerInput>) => request<Owner>(`/owners/${id}`, send('PUT', patch)),
   archiveOwner: (id: string) => request<Owner>(`/owners/${id}`, send('DELETE')),

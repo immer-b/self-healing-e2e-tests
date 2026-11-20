@@ -196,6 +196,12 @@ export function hotelRoutes(hotel: Hotel) {
       })),
     );
   });
+  router.get('/owners/duplicates', DESK, (req, res) => {
+    const phones = ([] as unknown[]).concat(req.query.phone ?? []).map(String);
+    res.json(
+      hotel.owners.duplicates({ name: str(req.query.name), email: str(req.query.email), phones, excludeId: str(req.query.excludeId) }),
+    );
+  });
   router.get('/owners/:id', DESK, (req, res) => sendFound(res, hotel.owners.get(String(req.params.id)), 'Owner'));
   router.post('/owners', DESK, h((req, res) => send(res, hotel.owners.create(req.body, actorOf(req)), 201)));
   router.put('/owners/:id', DESK, h((req, res) => send(res, hotel.owners.update(String(req.params.id), req.body, actorOf(req)))));

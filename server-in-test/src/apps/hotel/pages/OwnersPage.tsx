@@ -168,16 +168,29 @@ export function OwnerDialog({ owner, onClose, onSaved }: { owner?: Owner; onClos
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [general, setGeneral] = useState<string>();
   const [busy, setBusy] = useState(false);
+  const [duplicates, setDuplicates] = useState<Owner[]>();
 
   const setAddress = (field: keyof OwnerInput['address']) => (e: { target: { value: string } }) =>
     setValues((v) => ({ ...v, address: { ...v.address, [field]: e.target.value } }));
   const updateContact = (index: number, change: (contact: Contact) => Contact) =>
     setValues((v) => ({ ...v, contacts: v.contacts.map((c, i) => (i === index ? change(c) : c)) }));
 
-  const submit = async (event: FormEvent) => {
+  const submit = async (event: FormEvent, { confirmed = false } = {}) => {
     event.preventDefault();
     setBusy(true);
     try {
+      if (!owner && !confirmed) {
+        const matches = await api.duplicateOwners({
+          name: values.name,
+          email: values.email,
+          phones: values.contacts.flatMap((c) => c.phones.map((p) => p.number)),
+        });
+        if (matches.length) {
+          setDuplicates(matches);
+          setBusy(false);
+          return;
+        }
+      }
       const saved = owner ? await api.updateOwner(owner.id, values) : await api.createOwner(values);
       onSaved(saved, !owner);
     } catch (e) {
@@ -207,6 +220,26 @@ export function OwnerDialog({ owner, onClose, onSaved }: { owner?: Owner; onClos
       <form id="owner-form" className="form" onSubmit={submit} noValidate>
         {general && <ErrorBanner>{general}</ErrorBanner>}
         {errors.contacts && <ErrorBanner>{errors.contacts}</ErrorBanner>}
+        {duplicates && (
+          <div className="banner banner-warning" role="alert">
+            <Icon name="alert" />
+            <div>
+              <strong>Possible duplicate.</strong> We already have{' '}
+              {duplicates.map((d, i) => (
+                <span key={d.id}>
+                  {i > 0 && ', '}
+                  {d.name} ({d.contacts[0]?.phones[0]?.number ?? d.email})
+                </span>
+              ))}
+              . If this is a returning customer, cancel and edit their record instead.
+              <div style={{ marginTop: 8 }}>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={(e) => submit(e, { confirmed: true })} disabled={busy}>
+                  Save anyway
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         <div className="form-row">
           <TextField label="Owner name" value={values.name} onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))} error={errors.name} />
           <TextField label="Email" type="email" value={values.email} onChange={(e) => setValues((v) => ({ ...v, email: e.target.value }))} error={errors.email} />
