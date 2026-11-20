@@ -141,3 +141,14 @@ describe('context priority and long dynamic text', () => {
     expect(scoreFingerprint(baseline, panel, { dynamicText: true }).breakdown.text).toBeGreaterThan(0.3);
   });
 });
+
+describe('custom weights', () => {
+  it('lets callers change which features dominate the ranking', () => {
+    const baseline = fp({ tag: 'button', role: 'button', text: 'Save', classes: ['btn-save'] });
+    const sameText = fp({ tag: 'a', role: 'link', text: 'Save' });
+    const sameClass = fp({ tag: 'button', role: 'button', text: 'Store', classes: ['btn-save'] });
+    const textOnly = { weights: { tag: 0, role: 0, type: 0, attributes: 0, path: 0, structure: 0 } };
+    expect(rankCandidates(baseline, [{ fingerprint: sameClass }, { fingerprint: sameText }], textOnly)[0].fingerprint).toBe(sameText);
+    expect(rankCandidates(baseline, [{ fingerprint: sameClass }, { fingerprint: sameText }])[0].fingerprint).toBe(sameClass);
+  });
+});

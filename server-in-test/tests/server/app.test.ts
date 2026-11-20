@@ -19,6 +19,8 @@ function makeClientDir() {
     mkdirSync(join(dir, app));
     writeFileSync(join(dir, app, 'index.html'), `<html><head></head><body>${app} app</body></html>`);
   }
+  mkdirSync(join(dir, 'assets'));
+  writeFileSync(join(dir, 'assets', 'app.js'), 'console.log("asset")');
   return dir;
 }
 
@@ -67,6 +69,13 @@ describe('HTTP API', () => {
       const res = await request(app).post('/api/records').send({ name: '', owner: 'x', status: 'weird', amount: -1 });
       expect(res.status).toBe(400);
       expect(Object.keys(res.body.errors).sort()).toEqual(['amount', 'name', 'status']);
+    });
+
+    it('persists updates and deletes', async () => {
+      await request(app).put('/api/records/1').send({ status: 'pending' });
+      expect((await request(app).get('/api/records/1')).body.status).toBe('pending');
+      await request(app).delete('/api/records/2');
+      expect((await request(app).get('/api/records')).body.map((r: { id: string }) => r.id)).toEqual(['1']);
     });
 
     it('updates a record, validating fields', async () => {
@@ -124,6 +133,12 @@ describe('HTTP API', () => {
     it.each(['login', 'query', 'report'])('serves the %s app with deep-link fallback', async (name) => {
       expect((await request(app).get(`/${name}/`)).text).toContain(`${name} app`);
       expect((await request(app).get(`/${name}/some/deep/link`)).text).toContain(`${name} app`);
+    });
+
+    it('serves shared build assets', async () => {
+      const res = await request(app).get('/assets/app.js');
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toMatch(/javascript/);
     });
 
     it('redirects / to the login app', async () => {

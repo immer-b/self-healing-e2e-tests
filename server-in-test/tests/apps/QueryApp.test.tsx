@@ -4,6 +4,7 @@ import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryApp } from '../../src/apps/query/QueryApp';
 import { createRecordRepository } from '../../src/server/recordRepository';
+import { validateRecordInput } from '../../src/server/validation';
 import type { RecordStatus } from '../../src/server/types';
 import { mockFetch } from './testUtils';
 
@@ -19,7 +20,10 @@ function mockRecordsApi() {
   mockFetch({
     'GET /api/records': (_init, url) =>
       ({ body: repo.list({ text: url.searchParams.get('text') ?? '', status: (url.searchParams.get('status') ?? '') as RecordStatus }) }),
-    'POST /api/records': (init) => ({ status: 201, body: repo.create(JSON.parse(String(init?.body))) }),
+    'POST /api/records': (init) => {
+      const result = validateRecordInput(JSON.parse(String(init?.body)));
+      return result.ok ? { status: 201, body: repo.create(result.value) } : { status: 400, body: { errors: result.errors } };
+    },
     'PUT /api/records/*': (init, url) => ({ body: repo.update(url.pathname.split('/').pop()!, JSON.parse(String(init?.body))) }),
     'DELETE /api/records/*': (_init, url) => {
       repo.remove(url.pathname.split('/').pop()!);
@@ -115,6 +119,32 @@ describe.each([1, 2, 3] as const)('QueryApp v%i', (version) => {
     await userEvent.click(ui.save());
     expect(await screen.findByText('Alpha Renamed')).toBeInTheDocument();
     expect(screen.queryByText('Alpha Project')).not.toBeInTheDocument();
+  });
+
+  it('shows server validation errors and keeps the form open', async () => {
+    await userEvent.click(ui.addButton());
+    await fillForm({ owner: 'olga', amount: '5' });
+    await userEvent.click(ui.save());
+    expect(await screen.findByRole('alert')).toHaveTextContent(/name is required/i);
+    expect(ui.save()).toBeInTheDocument();
+    expect(ui.count()).toHaveTextContent('3');
+  });
+
+  it('discards edits when the form is cancelled', async () => {
+    await userEvent.click(ui.rowActions('Alpha Project'));
+    await userEvent.click(ui.action(/^(edit|edit record)$/i));
+    await fillForm({ name: 'Should Not Save' });
+    await userEvent.click(ui.action(/^(cancel|discard)$/i));
+    expect(screen.queryByText('Should Not Save')).not.toBeInTheDocument();
+    expect(screen.getAllByText('Alpha Project').length).toBeGreaterThan(0); // v3 also shows it in the drawer
+  });
+
+  it('keeps the record when deletion is not confirmed', async () => {
+    await userEvent.click(ui.rowActions('Gamma Audit'));
+    await userEvent.click(ui.action(/^(delete|delete record)$/i));
+    await userEvent.click(ui.action(/^(cancel|no|keep record)$/i));
+    expect(screen.getAllByText('Gamma Audit').length).toBeGreaterThan(0); // v3 also shows it in the drawer
+    expect(ui.count()).toHaveTextContent('3');
   });
 
   it('deletes a record after confirmation', async () => {

@@ -1,3 +1,4 @@
+import { expect } from '@playwright/test';
 import { test as healingTest } from '../src';
 import { createLoginPage, type LoginPage } from './pages/loginPage';
 import { createResultsPage, type ResultsPage } from './pages/resultsPage';
@@ -14,6 +15,11 @@ interface E2eFixtures {
   reportPage: ReportPage;
   /** Resets the sample server's data and selects `uiVersion` before every test (auto). */
   prepareServer: void;
+  /**
+   * After every test (auto): v1 must not heal (the page-object selectors are correct) and v2/v3 must
+   * heal (so a pass is not an accident of a selector still matching). Annotations must match events.
+   */
+  verifyHealing: void;
 }
 
 export const test = healingTest.extend<E2eOptions & E2eFixtures>({
@@ -28,9 +34,21 @@ export const test = healingTest.extend<E2eOptions & E2eFixtures>({
     { auto: true },
   ],
 
+  verifyHealing: [
+    async ({ healEvents, uiVersion }, use, testInfo) => {
+      await use();
+      if (testInfo.status !== testInfo.expectedStatus) return; // don't mask the real failure
+      const annotations = testInfo.annotations.filter((a) => a.type === 'self-healed');
+      expect(annotations, 'self-healed annotations').toHaveLength(healEvents.length);
+      if (uiVersion === 1) expect(healEvents, 'v1 selectors should never need healing').toEqual([]);
+      else expect(healEvents.length, `v${uiVersion} should be exercised through healed selectors`).toBeGreaterThan(0);
+    },
+    { auto: true },
+  ],
+
   loginPage: async ({ page, healer }, use) => use(createLoginPage(page, healer)),
   resultsPage: async ({ page, healer }, use) => use(createResultsPage(page, healer)),
   reportPage: async ({ page, healer }, use) => use(createReportPage(page, healer)),
 });
 
-export { expect } from '@playwright/test';
+export { expect };

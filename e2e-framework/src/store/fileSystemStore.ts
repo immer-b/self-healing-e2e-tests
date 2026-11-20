@@ -1,5 +1,6 @@
 import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 import type { ElementRecord } from '../fingerprint/types';
 import type { ElementStore } from './types';
 
@@ -14,10 +15,47 @@ const decodeName = (name: string) => decodeURIComponent(name);
 
 const isMissing = (error: unknown) => (error as NodeJS.ErrnoException).code === 'ENOENT';
 
+/** Windows briefly locks a file that another rename is replacing; these errors are worth retrying. */
+const isTransientLock = (error: unknown) => ['EPERM', 'EBUSY', 'EACCES'].includes((error as NodeJS.ErrnoException).code ?? '');
+
+/** Atomically replaces `target`: write a uniquely named temp file, then rename it over the target. */
+async function writeAtomically(target: string, content: string, attempts = 10) {
+  const temp = `${target}.${randomUUID()}.tmp`;
+  await writeFile(temp, content);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      await rename(temp, target);
+      return;
+    } catch (error) {
+      if (!isTransientLock(error) || attempt >= attempts) {
+        await rm(temp, { force: true });
+        throw error;
+      }
+      // Jittered backoff so competing processes don't retry in lockstep.
+      await new Promise((resolve) => setTimeout(resolve, 5 * attempt + Math.random() * 20));
+    }
+  }
+}
+
+/**
+ * Serialises writes per file within this process (no self-contention); `writeAtomically`'s retry
+ * covers contention with other worker processes.
+ */
+function createWriteQueue() {
+  const tails = new Map<string, Promise<void>>();
+  return (file: string, write: () => Promise<void>) => {
+    const next = (tails.get(file) ?? Promise.resolve()).catch(() => {}).then(write);
+    tails.set(file, next);
+    void next.finally(() => tails.get(file) === next && tails.delete(file)).catch(() => {});
+    return next;
+  };
+}
+
 /** One JSON document per element, so parallel workers never rewrite each other's files. */
 export function createFileSystemStore({ dir }: FileSystemStoreOptions): ElementStore {
   const pageDir = (pageId: string) => join(dir, encodeName(pageId));
   const elementFile = (pageId: string, key: string) => join(pageDir(pageId), `${encodeName(key)}.json`);
+  const enqueueWrite = createWriteQueue();
 
   const readRecord = async (file: string): Promise<ElementRecord | undefined> => {
     try {
@@ -42,10 +80,8 @@ export function createFileSystemStore({ dir }: FileSystemStoreOptions): ElementS
 
     async put(record) {
       await mkdir(pageDir(record.pageId), { recursive: true });
-      const target = elementFile(record.pageId, record.elementKey);
-      const temp = `${target}.${process.pid}.${Date.now()}.tmp`;
-      await writeFile(temp, JSON.stringify(record, null, 2));
-      await rename(temp, target);
+      const file = elementFile(record.pageId, record.elementKey);
+      await enqueueWrite(file, () => writeAtomically(file, JSON.stringify(record, null, 2)));
     },
 
     async listPages() {

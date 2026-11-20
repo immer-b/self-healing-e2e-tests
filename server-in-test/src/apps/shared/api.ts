@@ -18,11 +18,20 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     headers: { 'Content-Type': 'application/json', ...init?.headers },
   });
   const body = response.status === 204 ? undefined : await response.json().catch(() => undefined);
-  if (!response.ok) {
-    const message = (body as { error?: string } | undefined)?.error ?? `Request failed (${response.status})`;
-    throw apiError(message, response.status, body);
-  }
+  if (!response.ok) throw apiError(errorMessage(body, response.status), response.status, body);
   return body as T;
+}
+
+/** Turns `{ error }` or field-level `{ errors: { name: 'is required' } }` into a readable message. */
+function errorMessage(body: unknown, status: number): string {
+  const { error, errors } = (body ?? {}) as { error?: string; errors?: Record<string, string> };
+  if (error) return error;
+  if (errors && Object.keys(errors).length) {
+    return Object.entries(errors)
+      .map(([field, problem]) => `${field} ${problem}`)
+      .join(', ');
+  }
+  return `Request failed (${status})`;
 }
 
 const json = (method: string, data: unknown): RequestInit => ({ method, body: JSON.stringify(data) });

@@ -139,6 +139,47 @@ test.describe('healing', () => {
   });
 });
 
+test.describe('options and caching details', () => {
+  test('respects stricter acceptance thresholds', async ({ page }) => {
+    await page.setContent(LOGIN_V1);
+    await healerFor(page).locate({ key: 'submit', selector: '#login-button' });
+    await page.setContent(LOGIN_V2);
+    const strict = healerFor(page, { threshold: 0.99, minScore: 0.99, healTimeout: 300 });
+    await expect(strict.locate({ key: 'submit', selector: '#login-button' })).rejects.toThrow(/could not heal/);
+  });
+
+  test('re-heals when a cached selector now points at a different element', async ({ page }) => {
+    await page.setContent(LOGIN_V1);
+    await healerFor(page).locate({ key: 'password', selector: '#password' });
+    await page.setContent(LOGIN_V2);
+    const healer = healerFor(page);
+    await healer.locate({ key: 'password', selector: '#password' });
+    // Same structure, but the fields swapped places: the cached positional selector is now wrong.
+    await page.setContent(LOGIN_V2.replace(
+      /<div class="field"><input class="input-user"[^>]*><\/div>\s*<div class="field"><input class="input-pass"[^>]*><\/div>/,
+      '<div class="field"><input class="input-pass" name="pass" type="password" placeholder="Password"></div>' +
+        '<div class="field"><input class="input-user" name="user" placeholder="Username"></div>',
+    ));
+    const password = await healer.locate({ key: 'password', selector: '#password' });
+    await expect(password).toHaveAttribute('type', 'password');
+    expect(events.map((e) => e.fromCache)).toEqual([false, false]);
+  });
+
+  test('does not rewrite an unchanged baseline', async ({ page }) => {
+    let puts = 0;
+    const counting: ElementStore = { ...store, put: async (record) => { puts++; await store.put(record); } };
+    await page.setContent(LOGIN_V1);
+    const healer = createHealer({ store: counting, primaryTimeout: 300 }).forPage(page, 'fixture');
+    await healer.locate({ key: 'username', selector: '#username' });
+    await healer.locate({ key: 'username', selector: '#username' });
+    expect(puts).toBe(1);
+    await page.fill('#username', 'typed');
+    await page.evaluate(() => document.querySelector('#username')!.setAttribute('placeholder', 'Your name'));
+    await healer.locate({ key: 'username', selector: '#username' });
+    expect(puts).toBe(2);
+  });
+});
+
 test.describe('collections and scopes', () => {
   test('heals a collection of rows into the matching list items', async ({ page }) => {
     await page.setContent(TABLE_V1);

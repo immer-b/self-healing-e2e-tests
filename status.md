@@ -4,6 +4,25 @@ Running log of how the project evolves. Newest entry first.
 
 ---
 
+## 2026-11-20 08:22 EST
+
+### Changes
+- Refactor: named save/delete handlers in the query layouts, `testSupportRoutes` in its own module, `VersionedLayout` removed, shared page-object actions (`click`, `fill`, `numbersIn`, ...)
+- Bug fix (found by a new test): concurrent writes to the filesystem store could fail with `ENOENT`/`EPERM`, because two writes in the same millisecond shared one temp file. Now uses unique temp names, a per-file write queue and a jittered retry
+- Bug fix (found by a new test): server validation errors showed as "Request failed (400)". The UI now shows field messages, for example "name is required"
+
+### Test strength
+- E2E: every test now checks that v1 records 0 heals (proving the selectors are right) and v2/v3 record at least 1 (proving a pass isn't accidental), and that annotations match the heal events
+- Server: added repository isolation (returned records are copies, ids can't be changed), validation edge cases, rounding, asset serving, persistence after update and delete, UI error display, Cancel/Keep paths in all 3 layouts, and `useUiVersion` behaviour when offline and after unmount
+- Framework: added concurrent filesystem writes, remote 500 errors, custom weights, strict thresholds, stale-cache recovery, skipped duplicate baseline writes
+- Checked by mutation: 7 deliberate bugs injected, all 7 caught
+
+### Test coverage
+- Server unit: 116 · framework unit: 66 · healer integration: 14 · E2E: 20 specs × 3 versions = 60
+- Total: 256 tests, all passing
+
+---
+
 ## 2026-11-20 08:02 EST
 
 ### Server (`server-in-test`)

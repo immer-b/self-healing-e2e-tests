@@ -37,6 +37,23 @@ describe('useUiVersion', () => {
     await waitFor(() => expect(result.current.version).toBe(3));
   });
 
+  it('keeps the last known version when the server is briefly unreachable', async () => {
+    const { result } = renderHook(() => useUiVersion(20));
+    await waitFor(() => expect(result.current.version).toBe(1));
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(result.current.version).toBe(1);
+  });
+
+  it('stops polling after unmount', async () => {
+    const { unmount } = renderHook(() => useUiVersion(20));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    unmount();
+    const calls = fetchMock.mock.calls.length;
+    await new Promise((resolve) => setTimeout(resolve, 80));
+    expect(fetchMock.mock.calls.length).toBe(calls);
+  });
+
   it('changes the version on the server', async () => {
     const { result } = renderHook(() => useUiVersion(10_000));
     await waitFor(() => expect(result.current.version).toBe(1));

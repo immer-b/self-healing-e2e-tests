@@ -34,3 +34,9 @@ describe('createStore', () => {
     }
   });
 });
+
+describe('memory store from the environment', () => {
+  it('supports HEALING_STORE=memory', () => {
+    expect(storeConfigFromEnv({ HEALING_STORE: 'memory' })).toEqual({ type: 'memory' });
+  });
+});

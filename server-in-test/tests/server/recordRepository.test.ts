@@ -59,3 +59,31 @@ describe('recordRepository', () => {
     expect(repo.list().map((r) => r.id)).toEqual(['1', '2', '3']);
   });
 });
+
+describe('recordRepository isolation', () => {
+  it('returns copies so callers cannot mutate stored records', () => {
+    const repo = createRecordRepository(seed);
+    repo.list()[0].name = 'hacked';
+    repo.get('1')!.owner = 'hacked';
+    expect(repo.get('1')).toMatchObject({ name: 'Alpha Project', owner: 'alice' });
+  });
+
+  it('never lets an update change the record id', () => {
+    const repo = createRecordRepository(seed);
+    const updated = repo.update('1', { name: 'X', id: '99' } as never);
+    expect(updated?.id).toBe('1');
+    expect(repo.get('99')).toBeUndefined();
+  });
+
+  it('keeps ids unique after deletes', () => {
+    const repo = createRecordRepository(seed);
+    repo.remove('3');
+    expect(repo.create({ name: 'New', owner: 'n', status: 'active', amount: 1 }).id).toBe('4');
+  });
+
+  it('combines text and status filters', () => {
+    const repo = createRecordRepository(seed);
+    expect(repo.list({ text: 'alice', status: 'active' }).map((r) => r.name)).toEqual(['Alpha Project']);
+    expect(repo.list({ text: '  ', status: '' })).toHaveLength(3);
+  });
+});

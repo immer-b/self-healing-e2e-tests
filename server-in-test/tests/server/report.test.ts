@@ -34,3 +34,14 @@ describe('buildReport', () => {
     expect(buildReport([]).averageAmount).toBe(0);
   });
 });
+
+describe('buildReport rounding', () => {
+  it('rounds the average to the nearest whole amount', () => {
+    const report = buildReport([
+      { id: '1', name: 'A', owner: 'a', status: 'active', amount: 1200 },
+      { id: '2', name: 'B', owner: 'b', status: 'active', amount: 800 },
+      { id: '3', name: 'C', owner: 'c', status: 'active', amount: 450 },
+    ]);
+    expect(report.averageAmount).toBe(817); // 816.67
+  });
+});

@@ -37,7 +37,10 @@ test.describe('results page', () => {
   test.describe('row CRUD via the row actions menu', () => {
     test('creates a record', async ({ resultsPage }) => {
       await resultsPage.createRecord({ name: 'Omega Pilot', owner: 'olga', status: 'pending', amount: 99 });
-      await expect(await resultsPage.row('Omega Pilot')).toContainText('olga');
+      const created = await resultsPage.row('Omega Pilot');
+      await expect(created).toContainText('olga');
+      await expect(created).toContainText('pending');
+      await expect(created).toContainText('$99');
       await expect.poll(() => resultsPage.resultCount()).toBe(7);
     });
 
