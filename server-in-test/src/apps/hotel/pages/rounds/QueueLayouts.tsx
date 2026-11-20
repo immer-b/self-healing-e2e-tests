@@ -47,7 +47,7 @@ function QueueList({ tasks, done, next }: QueueLayoutProps) {
           const isDone = task.status === 'completed';
           return (
             <li key={task.id} aria-label={roundName(task)}>
-              <Link to={`/queue/${task.id}`} className={`queue-item ${isDone ? 'is-done' : ''}`} aria-label={roundName(task)}>
+              <Link to={`/queue/${task.id}`} className={`queue-item ${isDone ? 'is-done' : ''}`}>
                 <span className={`queue-slot ${task.slot === 'evening' ? 'is-evening' : ''}`} aria-hidden="true">
                   {SLOT_TIMES[task.slot].replace(':00', '')}
                 </span>
@@ -103,8 +103,8 @@ function QueueTable({ tasks, done }: QueueLayoutProps) {
               <tr key={task.id} className="round-row" aria-label={roundName(task)}>
                 <td className="nowrap">{SLOT_LABELS[task.slot]}</td>
                 <td>
-                  <Link to={`/queue/${task.id}`} className="round-open" aria-label={roundName(task)}>
-                    {task.pet?.name}
+                  <Link to={`/queue/${task.id}`} className="round-open">
+                    {task.pet?.name} · {SLOT_LABELS[task.slot]} round
                   </Link>
                   {task.pet?.specialInstructions && task.status !== 'completed' && <div className="cell-sub">{task.pet.specialInstructions}</div>}
                 </td>
@@ -140,8 +140,8 @@ function QueueCards({ tasks, done }: QueueLayoutProps) {
             <p className="muted">
               {task.room?.name} · {task.pet?.breed}
             </p>
-            <Link to={`/queue/${task.id}`} className="round-card-link" aria-label={roundName(task)}>
-              {task.pet?.name}: begin round →
+            <Link to={`/queue/${task.id}`} className="round-card-link">
+              {task.pet?.name} · {SLOT_LABELS[task.slot]} round →
             </Link>
           </article>
         ))}

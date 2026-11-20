@@ -19,7 +19,7 @@ describe.each([1, 2, 3] as const)('rounds pages, UI v%i', (version) => {
     await waitFor(() => expect(layout()).not.toBeNull());
     const mine = hotel.tasks.queue('emp-3', TODAY);
     expect(await screen.findByText(new RegExp(`0\\s*(of|/)\\s*${mine.length}`))).toBeInTheDocument();
-    for (const task of mine) expect(screen.getAllByText(task.pet!.name).length).toBeGreaterThan(0);
+    for (const task of mine) expect(screen.getAllByText(new RegExp(task.pet!.name)).length).toBeGreaterThan(0);
     linkClassesByVersion.set(version, within(document.querySelector('main')!).getAllByRole('link').map((a) => a.className).join(' '));
   });
 
