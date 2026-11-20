@@ -5,6 +5,7 @@ import { Badge, Card, ErrorBanner, Loading, PageHeader, useToast } from '../comp
 import { ROOM_TYPE_LABELS, SLOT_LABELS, SLOT_TIMES, SPECIES_LABELS, formatDateTime, useResource } from '../lib';
 import { Link, navigate } from '../router';
 import { NotesCard } from './PetDetailPage';
+import { prepareUpload } from '../image';
 
 const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 
@@ -39,10 +40,14 @@ export function TaskPage({ params }: { params: Record<string, string> }) {
     event.target.value = '';
     if (!file) return;
     if (!file.type.startsWith('image/')) return setProblem('Choose an image file (JPEG, PNG, WebP or GIF).');
-    if (file.size > MAX_PHOTO_BYTES) return setProblem('That photo is larger than 5 MB. Try a smaller one.');
     setUploading(true);
     try {
-      const saved = await api.uploadTaskPhoto(task.id, file);
+      const prepared = await prepareUpload(file);
+      if (prepared.size > MAX_PHOTO_BYTES) {
+        setProblem('That photo is larger than 5 MB even after shrinking it. Try another one.');
+        return;
+      }
+      const saved = await api.uploadTaskPhoto(task.id, prepared);
       merge({ photoId: saved.photoId });
       setProblem(undefined);
     } catch (e) {
