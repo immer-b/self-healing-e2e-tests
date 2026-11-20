@@ -113,9 +113,10 @@ async function openRoundAndFill(page: Page) {
 
 /** Draws a stand-in "room photo" (warm room, bed, paw) in the browser so docs don't show a blank image. */
 async function samplePhoto(page: Page): Promise<Buffer> {
-  const dataUrl = await page.evaluate(() => {
+  // Passed as a string: tsx would otherwise inject helpers that don't exist in the page.
+  const dataUrl = await page.evaluate<string>(`(() => {
     const canvas = Object.assign(document.createElement('canvas'), { width: 960, height: 540 });
-    const ctx = canvas.getContext('2d')!;
+    const ctx = canvas.getContext('2d');
     const wall = ctx.createLinearGradient(0, 0, 0, 540);
     wall.addColorStop(0, '#e9dcc8');
     wall.addColorStop(1, '#d6c3a5');
@@ -128,18 +129,13 @@ async function samplePhoto(page: Page): Promise<Buffer> {
     ctx.ellipse(480, 420, 260, 70, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.fillStyle = '#7a5235';
-    const paw = (x: number, y: number, r: number) => {
+    for (const [x, y, r] of [[480, 360, 46], [420, 290, 18], [460, 270, 18], [500, 270, 18], [540, 290, 18]]) {
       ctx.beginPath();
       ctx.ellipse(x, y, r, r * 1.15, 0, 0, Math.PI * 2);
       ctx.fill();
-    };
-    paw(480, 360, 46);
-    paw(420, 290, 18);
-    paw(460, 270, 18);
-    paw(500, 270, 18);
-    paw(540, 290, 18);
+    }
     return canvas.toDataURL('image/png');
-  });
+  })()`);
   return Buffer.from(dataUrl.split(',')[1], 'base64');
 }
 
