@@ -17,7 +17,7 @@ function makeClientDir() {
   const dir = mkdtempSync(join(tmpdir(), 'client-'));
   for (const app of ['login', 'query', 'report']) {
     mkdirSync(join(dir, app));
-    writeFileSync(join(dir, app, 'index.html'), `<html><body>${app} app</body></html>`);
+    writeFileSync(join(dir, app, 'index.html'), `<html><head></head><body>${app} app</body></html>`);
   }
   return dir;
 }
@@ -98,6 +98,14 @@ describe('HTTP API', () => {
     it.each(['login', 'query', 'report'])('serves the %s app with deep-link fallback', async (name) => {
       expect((await request(app).get(`/${name}/`)).text).toContain(`${name} app`);
       expect((await request(app).get(`/${name}/some/deep/link`)).text).toContain(`${name} app`);
+    });
+
+    it('injects the default UI version (1 unless configured) into each app page', async () => {
+      expect((await request(app).get('/login/')).text).toContain('<meta name="ui-version" content="1">');
+      const v3 = createApp({ repository: createRecordRepository(seed), users: DEFAULT_USERS, clientDir: makeClientDir(), uiVersion: 3 });
+      for (const path of ['/login/', '/query/', '/report/deep/link']) {
+        expect((await request(v3).get(path)).text).toContain('<meta name="ui-version" content="3">');
+      }
     });
 
     it('redirects / to the login app', async () => {

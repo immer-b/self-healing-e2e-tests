@@ -31,6 +31,7 @@ test.describe('login page', () => {
   test('navigates to the results page after signing in', async ({ loginPage, page, uiVersion }) => {
     await loginPage.login('admin', 'password123');
     await loginPage.openResults();
-    await expect(page).toHaveURL(new RegExp(`/query/\\?v=${uiVersion}$`));
+    // The test server runs with the default UI version 1, so only other versions need ?v= in links.
+    await expect(page).toHaveURL(new RegExp(uiVersion === 1 ? '/query/$' : `/query/\\?v=${uiVersion}$`));
   });
 });

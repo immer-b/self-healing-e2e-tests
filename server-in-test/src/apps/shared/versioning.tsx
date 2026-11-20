@@ -1,6 +1,6 @@
 import type { ComponentType } from 'react';
 import { createRoot } from 'react-dom/client';
-import { parseUiVersion, type UiVersion } from './uiVersion';
+import { parseUiVersion, readServerUiVersion, type UiVersion } from './uiVersion';
 import { VersionNav } from './VersionNav';
 import './base.css';
 
@@ -25,7 +25,8 @@ export function VersionedLayout<P extends object>({
   );
 }
 
-/** Entry point helper: mounts an app into #root with the version from the ?v= query parameter. */
+/** Entry point helper: mounts an app into #root using ?v= if present, otherwise the server's default version. */
 export function mountApp(App: ComponentType<{ version: UiVersion }>) {
-  createRoot(document.getElementById('root')!).render(<App version={parseUiVersion(location.search)} />);
+  const version = parseUiVersion(location.search, readServerUiVersion(document));
+  createRoot(document.getElementById('root')!).render(<App version={version} />);
 }

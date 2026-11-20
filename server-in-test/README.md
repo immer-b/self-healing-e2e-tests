@@ -5,9 +5,11 @@ The sample application the self-healing framework is tested against: a **Node + 
 ## Scripts
 
 ```bash
-npm run serve       # vite build + start the server (PORT, default 3000)
+npm run serve       # vite build + start the server (UI v1, port 3000)
+npm run serve:v2    # same, serving UI v2 by default (also serve:v1 / serve:v3)
+npm run serve -- --ui-version=3 --port=4000   # any combination of flags
 npm run build       # build the three SPAs into dist/client
-npm start           # start the server only (expects dist/client to exist)
+npm start           # start the server only (expects dist/client; accepts the same flags)
 npm test            # Vitest: API, domain logic and React component tests
 npm run typecheck   # tsc --noEmit
 ```
@@ -51,6 +53,14 @@ Demo users: `admin` / `password123` and `viewer` / `viewer123`. Records are seed
 
 ## UI versions
 
+**Choosing a version.** The server has a default UI version, which you set with `--ui-version=<1|2|3>` or the `UI_VERSION` environment variable (default `1`). Flags take precedence. The port works the same way: `--port` or `PORT`. When serving each app's `index.html`, the server injects `<meta name="ui-version" content="N">`, so plain URLs like `/login/` render that version. A `?v=` query parameter still overrides it per page. The end-to-end tests use `?v=` so one server can serve all three versions. Links between apps only add `?v=` when the version differs from the server default.
+
+```mermaid
+flowchart LR
+  CLI["--ui-version / UI_VERSION"] --> CFG["parseServerConfig"] --> SPA["spaRoutes injects<br/>meta ui-version"]
+  SPA --> MOUNT["mountApp: ?v= if present,<br/>else meta value"]
+```
+
 Every app keeps one data hook and swaps only the *layout* component. Each version deliberately changes ids, classes, tags, structure and wording, but keeps the semantic hints (roles, labels, input types) that a real redesign usually keeps.
 
 | App | v1 | v2 | v3 |
@@ -74,7 +84,8 @@ flowchart LR
 server-in-test/
 ├─ src/
 │  ├─ server/                 # Node backend (Express 5)
-│  │  ├─ index.ts             # entry point: wires repository + users + client dir, listens on PORT
+│  │  ├─ index.ts             # entry point: reads config, wires repository + users + client dir, listens
+│  │  ├─ config.ts            # parseServerConfig(): --ui-version / UI_VERSION, --port / PORT
 │  │  ├─ app.ts               # createApp(): composes the routers below
 │  │  ├─ routes/              # authRoutes, recordRoutes, reportRoutes (+ test reset), spaRoutes
 │  │  ├─ recordRepository.ts  # in-memory CRUD + filtering (closure-based)

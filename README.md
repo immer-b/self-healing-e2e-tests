@@ -55,10 +55,12 @@ Every healed lookup is added to the test as a `self-healed` annotation and a `se
 ## Try the apps manually
 
 ```bash
-npm run serve --workspace server-in-test     # http://localhost:3000
+npm run serve --workspace server-in-test                        # UI v1 at http://localhost:3000
+npm run serve:v2 --workspace server-in-test                     # UI v2 (also serve:v1 / serve:v3)
+npm run serve --workspace server-in-test -- --ui-version=3 --port=4000
 ```
 
-Open `/login/`, `/query/` or `/report/` and append `?v=2` or `?v=3`. A footer link switches between versions. Demo credentials are `admin` / `password123`.
+Open `/login/`, `/query/` or `/report/`. They render the version the server was started with. Appending `?v=1|2|3` to a URL overrides it for that page, and so do the footer links. Demo credentials are `admin` / `password123`.
 
 ## A note on "chromedriver"
 

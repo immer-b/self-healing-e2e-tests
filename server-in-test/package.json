@@ -6,9 +6,12 @@
   "scripts": {
     "build": "vite build",
     "start": "tsx src/server/index.ts",
-    "serve": "npm run build && npm run start",
+    "serve": "vite build && tsx src/server/index.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "serve:v1": "npm run serve -- --ui-version=1",
+    "serve:v2": "npm run serve -- --ui-version=2",
+    "serve:v3": "npm run serve -- --ui-version=3"
   },
   "dependencies": {
     "express": "^5.3.0",

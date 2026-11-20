@@ -1,3 +1,7 @@
+/** UI layouts the sample apps can render; chosen per server (--ui-version) or per page (?v=). */
+export const UI_VERSIONS = [1, 2, 3] as const;
+export type UiVersion = (typeof UI_VERSIONS)[number];
+
 export const RECORD_STATUSES = ['active', 'inactive', 'pending'] as const;
 export type RecordStatus = (typeof RECORD_STATUSES)[number];
 
