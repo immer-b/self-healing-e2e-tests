@@ -37,7 +37,7 @@ The order within each list is the suggested priority.
 | S17 | Partly done 2026-11-20 (fields; vaccine policy needs decision) | Richer pet profiles: date of birth, weight, vet, vaccinations with expiry, profile photo | Real intake asks for these | Partly | Fields: yes. Blocking check-in on expired vaccines needs a policy decision | M |
 | S18 | Done 2026-11-20 | Duplicate-owner warning when the name, email or phone matches an existing owner | Avoids split histories for returning customers | Yes | Warn but allow saving | S |
 | S19 | Done 2026-11-20 | Request ids, structured JSON logs and a `/healthz` endpoint | Needed to operate it | Yes | Log to stdout. Health checks the data store only | S |
-| S20 | Queued | OpenAPI description generated from the validators | Lets other clients and contract tests use the API | Yes | Add `zod` and derive both validation and the spec from it | M |
+| S20 | Done 2026-11-20 (hand-written spec checked against the router instead of a zod rewrite) | OpenAPI description generated from the validators | Lets other clients and contract tests use the API | Yes | Add `zod` and derive both validation and the spec from it | M |
 | S21 | Done 2026-11-20 | Manual light/dark toggle (the app currently follows the OS setting) | User preference | Yes | Remembered per browser in `localStorage` | S |
 | S22 | Queued | Installable app (PWA) with offline drafts for staff on phones | Rooms may have weak Wi-Fi | Yes | Cache the app shell. Queue checklist, note and photo writes while offline | M |
 | S23 | Needs decision | Billing at check-out (nights × rate, extras, payments) | Natural next feature | Decision | Needs tax rules, payment provider and refund policy | L |

@@ -5,6 +5,7 @@ import type { Outcome } from './outcome';
 import { MAX_PHOTO_BYTES, PHOTO_TYPES } from './photos';
 import { readCookie, SESSION_COOKIE, SESSION_TTL_MS } from './sessions';
 import { isOverdue } from './scheduling';
+import { openApiDocument } from './openapi';
 import type { Employee, Entity, PetInput, Role, StayRecord } from './types';
 
 type AuthedRequest = Request & { employee: Employee };
@@ -75,6 +76,8 @@ export function hotelRoutes(hotel: Hotel) {
   const h = (handler: Handler) => (req: Request, res: Response) => handler(req as AuthedRequest, res);
   const ADMIN = allow('admin');
   const DESK = allow('admin', 'receiving');
+
+  router.get('/openapi.json', (_req, res) => res.json(openApiDocument()));
 
   /* ---------- auth ---------- */
 
