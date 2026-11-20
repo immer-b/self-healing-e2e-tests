@@ -23,6 +23,7 @@ export type BrowserResponse<R extends BrowserRequest> = R extends { mode: 'finge
 export function browserScript(target: Element, request: BrowserRequest): unknown {
   const IGNORED_TAGS = new Set(['script', 'style', 'head', 'meta', 'link', 'title', 'br', 'noscript', 'template', 'path', 'svg']);
   const KEPT_ATTRIBUTES = ['name', 'type', 'placeholder', 'title', 'aria-label', 'href', 'data-qa', 'data-testid', 'data-test', 'for'];
+  const MAX_PARENT_TEXT = 80;
   const doc = target.ownerDocument;
   const isDocumentRoot = target === doc.documentElement;
 
@@ -141,7 +142,8 @@ export function browserScript(target: Element, request: BrowserRequest): unknown
       accessibleName: accessibleName(el),
       context: {
         label: nearbyLabel(el),
-        parentText: truncate(norm(parentText.replace(text, '')), 80),
+        // Only small parents carry meaningful context; a big container's text is just noise.
+        parentText: parentText.length <= MAX_PARENT_TEXT ? norm(parentText.replace(text, '')) : '',
         ancestorLabels: ancestorLabels(el),
       },
       path,

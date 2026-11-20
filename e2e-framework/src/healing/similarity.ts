@@ -44,6 +44,32 @@ function diceCoefficient(a: string, b: string): number {
   return (2 * overlap) / (gramsA.length + gramsB.length);
 }
 
+const escapeRegExp = (text: string) => text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** True when `needle` appears in `haystack` as whole words ("records" in "total records", not "active" in "inactive"). */
+const containsWords = (haystack: string, needle: string) =>
+  new RegExp(String.raw`(^|[^\p{L}\p{N}])${escapeRegExp(needle)}($|[^\p{L}\p{N}])`, 'u').test(haystack);
+
+/** Scores the case where every word of the shorter text occurs in the longer one ("Export CSV" / "Export report as CSV"). */
+function tokenSubsetScore(a: string[], b: string[]): number {
+  const [shorter, longer] = a.length <= b.length ? [a, b] : [b, a];
+  if (!shorter.length) return 0;
+  const longerSet = new Set(longer);
+  return shorter.every((t) => longerSet.has(t)) ? 0.6 + 0.4 * (new Set(shorter).size / longerSet.size) : 0;
+}
+
+/** Reduces text to its format: digit runs -> "9", letter runs -> "a" ("$7,800" -> "$9,9"). */
+export const textShape = (text: string) =>
+  normalizeText(text).replace(/\p{N}+/gu, '9').replace(/\p{L}+/gu, 'a');
+
+/** Compares the format of two texts: identical shapes score 1, otherwise bigram overlap of the shapes. */
+export function shapeSimilarity(a: string, b: string): number {
+  const shapeA = textShape(a);
+  const shapeB = textShape(b);
+  if (!shapeA || !shapeB) return 0;
+  return shapeA === shapeB ? 1 : diceCoefficient(shapeA, shapeB);
+}
+
 /**
  * Fuzzy text similarity combining exact match, containment, token overlap and character bigrams.
  * Non-identical strings are capped below 1 so exact matches always win ties.
@@ -55,11 +81,14 @@ export function textSimilarity(a: string, b: string): number {
   if (na === nb) return 1;
 
   const [shorter, longer] = na.length <= nb.length ? [na, nb] : [nb, na];
-  const containment = longer.includes(shorter) ? 0.6 + 0.4 * (shorter.length / longer.length) : 0;
-  const tokens = setSimilarity(tokenize(na), tokenize(nb));
+  const containment = containsWords(longer, shorter) ? 0.6 + 0.4 * (shorter.length / longer.length) : 0;
+  const tokensA = tokenize(na);
+  const tokensB = tokenize(nb);
+  const tokens = setSimilarity(tokensA, tokensB);
+  const subset = tokenSubsetScore(tokensA, tokensB);
   const dice = diceCoefficient(na, nb);
 
-  return Math.min(0.95, Math.max(containment, tokens, dice));
+  return Math.min(0.95, Math.max(containment, tokens, subset, dice));
 }
 
 /** Longest-common-subsequence ratio for ordered sequences such as ancestor tag paths. */

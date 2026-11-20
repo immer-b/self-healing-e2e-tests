@@ -31,8 +31,8 @@ function metricValue(label: RegExp): string {
 
 const METRICS = {
   totalRecords: /^(total records|records)$/i,
-  totalAmount: /^(total amount|total value)$/i,
-  averageAmount: /^(average amount|average value)$/i,
+  totalAmount: /^(total amount|amount total)$/i,
+  averageAmount: /^(average amount|amount average)$/i,
   active: /^active$/i,
   pending: /^pending$/i,
 };

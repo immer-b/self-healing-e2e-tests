@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { textSimilarity, tokenize, setSimilarity, sequenceSimilarity } from '../../src/healing/similarity';
+import { textSimilarity, tokenize, setSimilarity, sequenceSimilarity, textShape, shapeSimilarity } from '../../src/healing/similarity';
 
 describe('tokenize', () => {
   it('splits camelCase, kebab, snake and whitespace into lowercase tokens', () => {
@@ -45,5 +45,32 @@ describe('sequenceSimilarity', () => {
   it('compares ordered sequences via longest common subsequence', () => {
     expect(sequenceSimilarity(['form', 'main', 'body'], ['form', 'div', 'main', 'body'])).toBeCloseTo(0.75);
     expect(sequenceSimilarity(['a'], ['b'])).toBe(0);
+  });
+});
+
+describe('word-aware matching', () => {
+  it('treats every word of the shorter text appearing in the longer one as a strong match', () => {
+    expect(textSimilarity('Export CSV', 'Export report as CSV')).toBeGreaterThan(0.75);
+  });
+
+  it('only counts containment on word boundaries', () => {
+    expect(textSimilarity('active', 'inactive')).toBeLessThan(0.85);
+    expect(textSimilarity('Records', 'Total records')).toBeGreaterThan(0.75);
+  });
+});
+
+describe('textShape', () => {
+  it('reduces text to its format so changing values still compare equal', () => {
+    expect(textShape('$7,800')).toBe('$9,9');
+    expect(textShape('6')).toBe(textShape('12'));
+    expect(textShape('2 records')).toBe('9 a');
+  });
+});
+
+describe('shapeSimilarity', () => {
+  it('is 1 for identical formats and fuzzy for longer texts', () => {
+    expect(shapeSimilarity('6', '12')).toBe(1);
+    expect(shapeSimilarity('6', '2 records')).toBe(0);
+    expect(shapeSimilarity('Owner bob Status x Amount $800', 'Owner: carol Status: y Amount: $3,000')).toBeGreaterThan(0.3);
   });
 });

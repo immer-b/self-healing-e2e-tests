@@ -1,5 +1,5 @@
 import type { ElementFingerprint } from '../fingerprint/types';
-import { sequenceSimilarity, setSimilarity, textSimilarity, tokenize } from './similarity';
+import { sequenceSimilarity, setSimilarity, shapeSimilarity, textSimilarity, tokenize } from './similarity';
 
 export interface FeatureWeights {
   tag: number;
@@ -25,8 +25,11 @@ export const DEFAULT_WEIGHTS: FeatureWeights = {
   structure: 0.5,
 };
 
-/** Text weight multiplier when the element's text is expected to change (row contents, metric values). */
-const DYNAMIC_TEXT_FACTOR = 0.15;
+/**
+ * For dynamic text only the value's format (see shapeSimilarity) is compared, at this fraction of the
+ * normal text weight; the remainder moves to context.
+ */
+const DYNAMIC_TEXT_FACTOR = 0.5;
 
 export interface ScoreOptions {
   /** Own text changes between runs (metric values): rely on surrounding context instead. */
@@ -84,7 +87,9 @@ function contextSimilarity(a: ElementFingerprint['context'], b: ElementFingerpri
   const bAll = pairs.map(([, y]) => y).filter(Boolean);
   const cross = Math.max(0, ...aAll.flatMap((x) => bAll.map((y) => textSimilarity(x, y))));
   const aligned = present.reduce((sum, [x, y]) => sum + textSimilarity(x, y), 0) / present.length;
-  return Math.max(aligned, cross * 0.9);
+  // A direct label match is the most specific signal, so it is not diluted by the other slots.
+  const labelMatch = textSimilarity(a.label, b.label);
+  return Math.max(labelMatch, aligned, cross * 0.9);
 }
 
 /** Compares a baseline fingerprint against a candidate; `score` is a weighted mean in [0, 1]. */
@@ -110,7 +115,12 @@ export function scoreFingerprint(
     role: baseline.role ? familyMatch(ROLE_FAMILIES, baseline.role, candidate.role) : undefined,
     type: typeA ? Number(typeA === candidate.attributes.type) : undefined,
     accessibleName: baseline.accessibleName ? textSimilarity(baseline.accessibleName, candidate.accessibleName) : undefined,
-    text: baseline.text && !ignoreContent ? textSimilarity(baseline.text, candidate.text) : undefined,
+    text:
+      !baseline.text || ignoreContent
+        ? undefined
+        : dynamicText
+          ? shapeSimilarity(baseline.text, candidate.text)
+          : textSimilarity(baseline.text, candidate.text),
     attributes: baselineTokens.length ? setSimilarity(baselineTokens, attributeTokens(candidate)) : undefined,
     context: ignoreContent ? undefined : contextSimilarity(baseline.context, candidate.context),
     path: sequenceSimilarity(baseline.path, candidate.path),

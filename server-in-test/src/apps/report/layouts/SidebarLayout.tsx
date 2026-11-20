@@ -9,8 +9,8 @@ export function SidebarLayout({ report, refresh, exportCsv }: ReportLayoutProps)
         <h2>Report summary</h2>
         <dl>
           <dt>Records</dt><dd data-metric="total">{report.totalRecords}</dd>
-          <dt>Total value</dt><dd data-metric="amount">{formatCurrency(report.totalAmount)}</dd>
-          <dt>Average value</dt><dd data-metric="average">{formatCurrency(report.averageAmount)}</dd>
+          <dt>Amount total</dt><dd data-metric="amount">{formatCurrency(report.totalAmount)}</dd>
+          <dt>Amount average</dt><dd data-metric="average">{formatCurrency(report.averageAmount)}</dd>
           <dt>Active</dt><dd data-metric="active">{report.byStatus.active}</dd>
           <dt>Inactive</dt><dd data-metric="inactive">{report.byStatus.inactive}</dd>
           <dt>Pending</dt><dd data-metric="pending">{report.byStatus.pending}</dd>

@@ -48,7 +48,7 @@ export function CardDrawerLayout({ records, filter, updateFilter, save, remove }
         </ul>
       )}
 
-      <button className="fab" type="button" aria-label="Create record" onClick={() => setDrawer({ mode: 'create' })}>+</button>
+      <button className="fab" type="button" aria-label="Add new record" onClick={() => setDrawer({ mode: 'create' })}>+</button>
 
       {drawer && (
         <aside className="drawer" role="dialog" aria-label={drawer.mode === 'create' ? 'New record' : 'Record details'}>

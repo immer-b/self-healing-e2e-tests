@@ -116,3 +116,28 @@ describe('collection items', () => {
     expect(score).toBeGreaterThan(0.45);
   });
 });
+
+describe('dynamic text shape', () => {
+  it('prefers a candidate whose value has the same format as the baseline value', () => {
+    const baseline = fp({ tag: 'span', text: '6', context: { label: 'Total records' } });
+    const value = fp({ tag: 'dd', text: '7', context: { label: 'Records' } });
+    const prose = fp({ tag: 'span', text: '2 records', context: { label: 'alice' } });
+    expect(scoreFingerprint(baseline, value, { dynamicText: true }).score).toBeGreaterThan(
+      scoreFingerprint(baseline, prose, { dynamicText: true }).score + 0.1,
+    );
+  });
+});
+
+describe('context priority and long dynamic text', () => {
+  it('lets a direct label match dominate noisy parent text', () => {
+    const baseline = fp({ tag: 'span', text: '6', context: { label: 'Total records', parentText: 'Total records' } });
+    const right = fp({ tag: 'dd', text: '6', context: { label: 'Records' } });
+    expect(scoreFingerprint(baseline, right, { dynamicText: true }).breakdown.context).toBeGreaterThan(0.8);
+  });
+
+  it('compares long dynamic text by fuzzy shape rather than exact shape', () => {
+    const baseline = fp({ tag: 'div', role: 'dialog', text: 'Beta Launch Owner bob Status inactive Amount $800 Close' });
+    const panel = fp({ tag: 'section', role: 'region', text: 'Owner: carol Status: active Amount: $3,000 Hide' });
+    expect(scoreFingerprint(baseline, panel, { dynamicText: true }).breakdown.text).toBeGreaterThan(0.3);
+  });
+});

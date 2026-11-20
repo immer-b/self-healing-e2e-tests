@@ -32,7 +32,7 @@ function mockRecordsApi() {
 const ui = {
   search: () => screen.getByRole('searchbox', { name: /search|filter/i }),
   statusFilter: () => screen.getByRole('combobox', { name: /status/i }),
-  addButton: () => screen.getByRole('button', { name: /add record|new record|create record/i }),
+  addButton: () => screen.getByRole('button', { name: /^(add record|\+ new record|add new record)$/i }),
   rowActions: (name: string) => {
     const row = screen.getByText(name).closest('tr, [role="row"], li') as HTMLElement;
     return within(row).getByRole('button', { name: /actions|options/i });
