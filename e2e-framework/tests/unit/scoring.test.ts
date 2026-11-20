@@ -105,3 +105,14 @@ describe('dynamic text weighting', () => {
     expect(breakdown.role).toBeUndefined();
   });
 });
+
+describe('collection items', () => {
+  it('ignores data-dependent text and sibling context when ignoreContent is set', () => {
+    const row = fp({ tag: 'tr', role: 'row', text: 'Beta Launch bob', childCount: 5, context: { label: 'Epsilon Research dave' } });
+    const card = fp({ tag: 'li', role: 'listitem', text: 'Zeta Rollout bob', childCount: 4 });
+    const { breakdown, score } = scoreFingerprint(row, card, { ignoreContent: true });
+    expect(breakdown.text).toBeUndefined();
+    expect(breakdown.context).toBeUndefined();
+    expect(score).toBeGreaterThan(0.45);
+  });
+});

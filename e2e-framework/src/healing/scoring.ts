@@ -29,7 +29,10 @@ export const DEFAULT_WEIGHTS: FeatureWeights = {
 const DYNAMIC_TEXT_FACTOR = 0.15;
 
 export interface ScoreOptions {
+  /** Own text changes between runs (metric values): rely on surrounding context instead. */
   dynamicText?: boolean;
+  /** Text and surroundings are pure data (collection items such as rows): compare structure only. */
+  ignoreContent?: boolean;
   weights?: Partial<FeatureWeights>;
 }
 
@@ -88,7 +91,7 @@ function contextSimilarity(a: ElementFingerprint['context'], b: ElementFingerpri
 export function scoreFingerprint(
   baseline: ElementFingerprint,
   candidate: ElementFingerprint,
-  { dynamicText = false, weights: overrides }: ScoreOptions = {},
+  { dynamicText = false, ignoreContent = false, weights: overrides }: ScoreOptions = {},
 ): ScoreResult {
   const weights = { ...DEFAULT_WEIGHTS, ...overrides };
   if (dynamicText) {
@@ -107,9 +110,9 @@ export function scoreFingerprint(
     role: baseline.role ? familyMatch(ROLE_FAMILIES, baseline.role, candidate.role) : undefined,
     type: typeA ? Number(typeA === candidate.attributes.type) : undefined,
     accessibleName: baseline.accessibleName ? textSimilarity(baseline.accessibleName, candidate.accessibleName) : undefined,
-    text: baseline.text ? textSimilarity(baseline.text, candidate.text) : undefined,
+    text: baseline.text && !ignoreContent ? textSimilarity(baseline.text, candidate.text) : undefined,
     attributes: baselineTokens.length ? setSimilarity(baselineTokens, attributeTokens(candidate)) : undefined,
-    context: contextSimilarity(baseline.context, candidate.context),
+    context: ignoreContent ? undefined : contextSimilarity(baseline.context, candidate.context),
     path: sequenceSimilarity(baseline.path, candidate.path),
     structure: (ratio(baseline.childCount, candidate.childCount) + ratio(baseline.textLength, candidate.textLength)) / 2,
   };

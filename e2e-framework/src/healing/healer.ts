@@ -29,8 +29,10 @@ export interface LocateSpec {
   selector: string;
   /** Restrict lookup and healing to this container (e.g. a single table row). */
   scope?: Locator;
-  /** The element's text changes between runs (values, row contents): rely less on text. */
+  /** The element's text changes between runs (e.g. metric values): rely on its labels instead. */
   dynamicText?: boolean;
+  /** Text and surroundings are pure data (set automatically by `locateAll`): compare structure only. */
+  ignoreContent?: boolean;
 }
 
 export interface HealEvent {
@@ -172,7 +174,7 @@ export function createHealer(options: HealerOptions) {
       /** Resolves a single element, healing the selector if it no longer matches. */
       locate: (spec: LocateSpec) => resolve(spec, false),
       /** Resolves a collection (e.g. table rows); heals to the best match plus its similar siblings. */
-      locateAll: (spec: LocateSpec) => resolve({ dynamicText: true, ...spec }, true),
+      locateAll: (spec: LocateSpec) => resolve({ ignoreContent: true, ...spec }, true),
     };
   }
 
