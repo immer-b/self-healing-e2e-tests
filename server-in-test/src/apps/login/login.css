@@ -13,7 +13,7 @@
 
 /* v3 split */
 .login-split { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
-.brand-panel { background: #0f172a; color: #fff; display: grid; place-items: center; font-size: 28px; }
+.brand-panel { background: #0f172a; color: #fff; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 28px; }
 .form-panel { display: grid; place-items: center; }
 .form-panel form { display: grid; gap: 16px; width: 300px; }
 .float-field { position: relative; }

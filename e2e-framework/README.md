@@ -12,6 +12,7 @@ npm run e2e          # all Playwright projects (starts the sample server automat
 npx playwright test --project framework       # healer integration tests against inline HTML
 npx playwright test --project v2-healed       # one UI version (runs v1-baseline first)
 npm run store:serve  # run a shared element-store service (see "Remote store")
+npm run screenshots  # capture every UI version side by side into ../docs/ui-versions.md (sample server must be running)
 npm run typecheck
 ```
 
@@ -150,6 +151,7 @@ e2e-framework/
 │  ├─ fixtures.ts              # uiVersion option, data reset, page object fixtures
 │  ├─ pages/                   # loginPage, resultsPage, reportPage (v1 selectors only)
 │  └─ specs/                   # login, results (filter + row CRUD), report
+├─ scripts/captureScreenshots.ts  # generates ../docs/ui-versions.md
 ├─ tests/
 │  ├─ unit/                    # Vitest: similarity, scoring, store contract (all backends), config
 │  └─ integration/             # Playwright: healer against inline HTML fixtures
