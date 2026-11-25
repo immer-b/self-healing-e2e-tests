@@ -1,7 +1,7 @@
 import { spawn, type ChildProcess } from 'node:child_process';
 import { resolve } from 'node:path';
 
-const SERVER_DIR = resolve(import.meta.dirname, '../../server-in-test');
+const SERVER_DIR = resolve(import.meta.dirname, '../../../server-in-test');
 const STARTUP_TIMEOUT_MS = 60_000;
 
 /** Resolves with the URL the server prints once it is listening (it picks a free port itself). */

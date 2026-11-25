@@ -21,7 +21,7 @@ export default defineConfig<E2eOptions>({
   },
   webServer: {
     command: 'npm run serve',
-    cwd: '../server-in-test',
+    cwd: '../../server-in-test',
     url: `${BASE_URL}/api/report`,
     // A throwaway SQLite folder, so e2e runs exercise persistence without touching dev data.
     env: { PORT: String(PORT), HOTEL_DATA_DIR: '.e2e-data' },

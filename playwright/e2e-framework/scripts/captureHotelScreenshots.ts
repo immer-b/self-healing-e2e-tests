@@ -12,7 +12,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000';
-const DOCS_DIR = resolve(import.meta.dirname, '../../docs');
+const DOCS_DIR = resolve(import.meta.dirname, '../../../docs');
 const SHOTS_DIR = join(DOCS_DIR, 'screenshots');
 const TODAY = '2026-11-20';
 

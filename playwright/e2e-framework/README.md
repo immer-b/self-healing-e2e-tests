@@ -1,6 +1,6 @@
 # e2e-framework
 
-A self-healing locator layer for **Playwright + TypeScript**, plus page objects and specs for the sample apps in [`../server-in-test`](../server-in-test/README.md).
+A self-healing locator layer for **Playwright + TypeScript**, plus page objects and specs for the sample apps in [`../../server-in-test`](../../server-in-test/README.md).
 
 When a selector still works, the framework saves a **fingerprint** of the element: its tag, role, attributes, accessible name, text, nearby labels and ancestor path. When the selector later breaks after a UI change, it scores every visible element against that fingerprint and uses the best match. It then reports what it healed.
 
@@ -15,8 +15,8 @@ npx playwright test --project hotel           # pet hotel journeys, offline mode
 npx playwright test --project hotel-mobile    # the general staff journeys on a Pixel 7
 VISUAL=1 npx playwright test --project hotel-visual  # screenshot comparisons (Linux baselines, created by CI)
 npm run store:serve  # run a shared element-store service (see "Remote store")
-npm run screenshots  # capture every UI version side by side into ../docs/ui-versions.md (sample server must be running)
-npm run screenshots:hotel  # capture the pet hotel screens into ../docs/hotel.md (sample server must be running)
+npm run screenshots  # capture every UI version side by side into ../../docs/ui-versions.md (sample server must be running)
+npm run screenshots:hotel  # capture the pet hotel screens into ../../docs/hotel.md (sample server must be running)
 npm run typecheck
 ```
 
@@ -161,8 +161,8 @@ e2e-framework/
 │  ├─ specs/                   # login, results (filter + row CRUD), report
 │  ├─ workerServer.ts          # one sample server per worker, on a free port
 │  └─ hotel/                   # pet hotel: fixtures (pinned clock), admin, frontDesk, staff, accessibility, visual
-├─ scripts/captureScreenshots.ts       # generates ../docs/ui-versions.md
-├─ scripts/captureHotelScreenshots.ts  # generates ../docs/hotel.md
+├─ scripts/captureScreenshots.ts       # generates ../../docs/ui-versions.md
+├─ scripts/captureHotelScreenshots.ts  # generates ../../docs/hotel.md
 ├─ tests/
 │  ├─ unit/                    # Vitest: similarity, scoring, store contract (all backends), config
 │  └─ integration/             # Playwright: healer against inline HTML fixtures

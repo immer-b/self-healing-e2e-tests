@@ -1,0 +1,5 @@
+{
+  // RobotCode resolves libraries from the workspace root; the Robot project lives in robot/,
+  // so add it to the path (run_e2e.py does the same with --pythonpath).
+  "robotcode.robot.pythonPath": ["./robot"]
+}

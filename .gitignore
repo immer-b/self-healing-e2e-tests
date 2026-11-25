@@ -8,8 +8,12 @@ playwright-report/
 server-in-test/data/
 server-in-test/.e2e-data/
 # Visual baselines are committed from Linux CI only
-e2e-framework/e2e/**/*-win32.png
-e2e-framework/e2e/**/*-darwin.png
+playwright/e2e-framework/e2e/**/*-win32.png
+playwright/e2e-framework/e2e/**/*-darwin.png
 coverage/
 server-in-test/.stryker-tmp/
 server-in-test/reports/
+# Robot Framework
+robot/results/
+__pycache__/
+.pytest_cache/

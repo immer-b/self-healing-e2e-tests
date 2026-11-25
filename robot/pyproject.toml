@@ -1,0 +1,18 @@
+[project]
+name = "self-healing-robot"
+version = "1.0.0"
+description = "Self-healing locators for Robot Framework + SeleniumLibrary"
+requires-python = ">=3.10"
+dependencies = [
+  "robotframework>=7.0",
+  "robotframework-seleniumlibrary>=6.5",
+  "selenium>=4.20",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["browser: drives a real headless Chrome (deselect with -m 'not browser')"]

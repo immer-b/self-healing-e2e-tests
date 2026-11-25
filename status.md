@@ -63,6 +63,31 @@ The order within each list is the suggested priority.
 
 ---
 
+## 2026-11-24
+
+Added a Robot Framework flavour of the self-healing tests and reorganised the repository around the shared sample app.
+
+### Layout
+- The repository root moved up one level. `server-in-test/` now sits beside `playwright/` (the Playwright framework, now at `playwright/e2e-framework/`) and `robot/`. History is kept as renames
+- The root `package.json` holds the npm workspaces (`server-in-test`, `playwright/e2e-framework`) and runs the Python suites too (`npm run test:robot:unit`, `npm run test:robot`). CI has a new `robot` job
+
+### Robot flavour (`robot/`)
+- `self_healing`, a Python package: a port of the fingerprint script, similarity, features, scoring, healer and stores. Scores match the TypeScript engine exactly on every fingerprint pair in the Playwright store
+- The `SelfHealing` Robot library on top of SeleniumLibrary, driving Chrome through chromedriver: `Heal Element`, `Heal Elements` (collections), `scope=` for lookups inside a row, `dynamic_text=` for changing values. Tests that heal get the `self-healed` tag, and each run writes `self-healing.json`
+- Same store layout and REST contract as the Playwright framework. The remote store is tested against the real TypeScript store server
+- Page-object resources and suites for login, results (filtering and row CRUD) and report, mirroring the Playwright specs. `run_e2e.py` runs v1 (baselines), then v2 and v3 (must heal) and combines the reports
+
+### Test coverage
+- Robot flavour: pytest 79 (64 unit, 15 healer tests in headless Chrome) · Robot e2e 60 (20 per UI version, every v2/v3 test healed)
+- Existing suites after the move: server and UI unit 453 · framework unit 66 · Playwright 121, of which 120 passed (see limitations)
+
+### Limitations
+- The Robot suites cover the three demo apps, not the pet hotel's rounds pages
+- `hotel › front desk › schedules tomorrow … rebalances when someone joins` is flaky (1 failure in 4 runs: `locator.check: Clicking the checkbox did not change its state`). It predates the move and is untouched
+- The CI `robot` job has not run on GitHub yet
+
+---
+
 ## 2026-11-20 16:18 EST
 
 Worked through the improvement queue: every item that could be done on reasonable assumptions is done (status column above). 36 commits, each on green.
