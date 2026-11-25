@@ -37,10 +37,32 @@ From the repository root, `npm run test:robot:unit` and `npm run test:robot` do 
 
 Tests that healed get the **`self-healed`** tag, so the report's tag statistics show how many tests relied on healing.
 
-Running one version directly with `robot` also works:
+### Running `robot` directly
+
+The same runs work without `run_e2e.py`. From `robot/`, pass the arguments the script would:
 
 ```bash
+robot --pythonpath . --variable UI_VERSION:1 --outputdir results/v1 e2e/specs
 robot --pythonpath . --variable UI_VERSION:2 --outputdir results/v2 e2e/specs
+robot --pythonpath . --variable UI_VERSION:3 --outputdir results/v3 e2e/specs
+```
+
+Run v1 at least once before v2 or v3: the page objects are written for v1, so that run records the baseline fingerprints the v2 and v3 runs heal from.
+
+To run one suite or test, point `robot` at the `e2e/specs` folder and filter. Don't run a `.robot` file on its own: that skips `__init__.robot`, which starts the sample server and Chrome.
+
+```bash
+robot --pythonpath . --variable UI_VERSION:2 --suite results e2e/specs            # one suite file
+robot --pythonpath . --variable UI_VERSION:2 --test "Some Test Name" e2e/specs    # one test
+robot --pythonpath . --variable UI_VERSION:2 --include crud e2e/specs             # by tag
+```
+
+Useful extras: `--console verbose` for more console output, `--loglevel DEBUG` for more detail in `log.html`, and `SKIP_BUILD=1` (PowerShell: `$env:SKIP_BUILD = "1"`) to skip rebuilding the client apps once they have been built.
+
+Each run writes `output.xml`, `log.html` and `report.html` to its `--outputdir` (the current folder if omitted). To combine runs into one report, as `run_e2e.py` does:
+
+```bash
+rebot --name "Self-healing e2e" --outputdir results results/v1/output.xml results/v2/output.xml results/v3/output.xml
 ```
 
 | Variable | Default | Meaning |
